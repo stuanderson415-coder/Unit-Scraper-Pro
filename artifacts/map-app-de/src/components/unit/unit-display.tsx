@@ -63,7 +63,7 @@ function CellInput({
 // ── Row model ──────────────────────────────────────────────────────────────────
 
 type SpanRow   = { kind: 'span';   key: string; label: string; style: 'element' | 'section' };
-type DataRow   = { kind: 'data';   key: string; label: string; indent?: boolean };
+type DataRow   = { kind: 'data';   key: string; label: string };
 
 type Row = SpanRow | DataRow;
 
@@ -83,7 +83,6 @@ function buildRows(unit: UnitOfCompetency): Row[] {
         kind: 'data',
         key: `pc-${el.number}-${pc.number}`,
         label: `${pc.number}\u2003${pc.text}`,
-        indent: true,
       });
     }
   }
@@ -282,7 +281,6 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
                 >
                   <td
                     className="border border-gray-300 px-3 py-2 text-gray-700 leading-snug align-top"
-                    style={row.indent ? { paddingLeft: '1.5rem' } : undefined}
                   >
                     {row.label}
                   </td>
