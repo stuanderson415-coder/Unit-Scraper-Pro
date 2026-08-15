@@ -1,10 +1,11 @@
-# [Project name]
+# Map App DE
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A VET curriculum mapping tool for Australian RTOs. Enter a unit of competency code (e.g. BSBMGT517) or upload a PDF — the app fetches and parses the unit from training.gov.au and presents every element and performance criterion in a structured table. Recent lookups are saved in a history sidebar.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/map-app-de run dev` — run the frontend (port assigned by workflow)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -14,23 +15,37 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite, Tailwind CSS, TanStack Query, Wouter
 - API: Express 5
-- DB: PostgreSQL + Drizzle ORM
+- DB: PostgreSQL + Drizzle ORM (`lib/db/src/schema/unitHistory.ts`)
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
+- API codegen: Orval (from `lib/api-spec/openapi.yaml`)
+- Scraping: Cheerio (fetches `training.gov.au/Training/Details/{code}`)
+- PDF parsing: pdf-parse v1 (CJS via `createRequire`)
 - Build: esbuild (CJS bundle)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — single source of truth for the API contract
+- `lib/db/src/schema/unitHistory.ts` — DB schema for lookup history
+- `artifacts/api-server/src/routes/units.ts` — all /units/* route handlers
+- `artifacts/api-server/src/lib/scraper.ts` — training.gov.au HTML scraper (Cheerio)
+- `artifacts/api-server/src/lib/pdfParser.ts` — PDF text extraction and element/PC parsing
+- `artifacts/map-app-de/src/` — React frontend
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- **Contract-first OpenAPI**: spec in `lib/api-spec/openapi.yaml` gates codegen; frontend and backend both consume generated types.
+- **pdf-parse v1 (CJS)**: v2 switched to named ESM exports and broke esbuild's default import resolution; pinned to v1 with `createRequire` for compatibility.
+- **`type: number` for IDs in spec**: `type: integer` causes Orval to emit `zod.int()` which is Zod v4 API not available on the v3 default export; using `number` avoids this.
+- **Multipart upload outside Orval**: the `/units/upload` endpoint uses multer directly; the OpenAPI schema does not include `format: binary` (which generates `File`/`Blob` types incompatible with the Node.js tsconfig).
+- **Lookup history in PostgreSQL**: simple `unit_history` table, 50-row cap on reads, cleared via DELETE endpoint.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Enter a unit code → app fetches and scrapes training.gov.au → displays elements + PCs in a table
+- Upload a PDF of a unit → app parses text → displays elements + PCs
+- History sidebar shows the last 50 lookups (deletable individually or all at once)
 
 ## User preferences
 
@@ -38,7 +53,9 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- training.gov.au may update its HTML structure; if scraping breaks, update CSS selectors in `artifacts/api-server/src/lib/scraper.ts`
+- Do NOT use `type: integer` in OpenAPI spec (generates `zod.int()` which fails typecheck); use `type: number` instead
+- Do NOT use `format: binary` in OpenAPI spec (generates `File`/`Blob` which aren't in Node tsconfig); handle file uploads with multer outside the spec's body validation
 
 ## Pointers
 

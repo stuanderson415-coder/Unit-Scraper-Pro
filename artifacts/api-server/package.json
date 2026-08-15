@@ -12,10 +12,13 @@
   "dependencies": {
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
+    "cheerio": "^1.2.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "drizzle-orm": "catalog:",
     "express": "^5.2.1",
+    "multer": "^2.2.0",
+    "pdf-parse": "^1.1.4",
     "pino": "^9.14.0",
     "pino-http": "^10.5.0"
   },
@@ -23,7 +26,9 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
     "@types/node": "catalog:",
+    "@types/pdf-parse": "^1.1.5",
     "esbuild": "0.27.3",
     "esbuild-plugin-pino": "^2.3.3",
     "pino-pretty": "^13.1.3",

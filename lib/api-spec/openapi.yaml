@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Map App DE - Unit of Competency API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: units
+    description: Unit of competency operations
 paths:
   /healthz:
     get:
@@ -24,13 +26,236 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /units/lookup:
+    post:
+      operationId: lookupUnit
+      tags: [units]
+      summary: Look up a unit of competency by code
+      description: Fetches and parses a unit of competency from training.gov.au by unit code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UnitLookupRequest"
+      responses:
+        "200":
+          description: Unit of competency found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnitOfCompetency"
+        "404":
+          description: Unit not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "400":
+          description: Invalid unit code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /units/upload:
+    post:
+      operationId: uploadUnit
+      tags: [units]
+      summary: Extract unit of competency from a PDF
+      description: Parses an uploaded PDF file and extracts elements and performance criteria
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UnitUploadRequest"
+      responses:
+        "200":
+          description: Unit extracted from PDF
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnitOfCompetency"
+        "400":
+          description: Invalid PDF or extraction failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /units/history:
+    get:
+      operationId: getUnitHistory
+      tags: [units]
+      summary: Get recent lookup history
+      description: Returns the most recently looked up units
+      responses:
+        "200":
+          description: List of history entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UnitHistoryEntry"
+    delete:
+      operationId: clearUnitHistory
+      tags: [units]
+      summary: Clear all lookup history
+      description: Deletes all entries from the lookup history
+      responses:
+        "204":
+          description: History cleared
+
+  /units/history/{id}:
+    delete:
+      operationId: deleteHistoryEntry
+      tags: [units]
+      summary: Delete a single history entry
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Entry deleted
+        "404":
+          description: Entry not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    ApiError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    UnitLookupRequest:
+      type: object
+      required: [unitCode]
+      properties:
+        unitCode:
+          type: string
+          description: The unit of competency code (e.g. BSBMGT517)
+
+    UnitUploadRequest:
+      type: object
+      required: [filename]
+      properties:
+        filename:
+          type: string
+          description: Name of the uploaded PDF file (actual file bytes sent as multipart)
+
+    PerformanceCriterion:
+      type: object
+      required: [number, text]
+      properties:
+        number:
+          type: string
+          description: Performance criterion number (e.g. 1.1)
+        text:
+          type: string
+          description: Performance criterion description
+
+    Element:
+      type: object
+      required: [number, title, performanceCriteria]
+      properties:
+        number:
+          type: string
+          description: Element number (e.g. 1)
+        title:
+          type: string
+          description: Element title
+        performanceCriteria:
+          type: array
+          items:
+            $ref: "#/components/schemas/PerformanceCriterion"
+
+    FoundationSkill:
+      type: object
+      required: [skill, description]
+      properties:
+        skill:
+          type: string
+          description: Skill type (e.g. Reading, Writing, Oral communication, Numeracy)
+        description:
+          type: string
+          description: Description of what is required for this skill
+
+    UnitOfCompetency:
+      type: object
+      required: [code, title, elements]
+      properties:
+        code:
+          type: string
+          description: Unit code (e.g. BSBMGT517)
+        title:
+          type: string
+          description: Unit title
+        release:
+          type: ["string", "null"]
+          description: Release number/version
+        status:
+          type: ["string", "null"]
+          description: Unit status (Current, Superseded, etc.)
+        description:
+          type: ["string", "null"]
+          description: Unit application/description text
+        elements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Element"
+        foundationSkills:
+          type: array
+          items:
+            $ref: "#/components/schemas/FoundationSkill"
+          description: Foundation skills required for the unit
+        performanceEvidence:
+          type: array
+          items:
+            type: string
+          description: Performance evidence requirements
+        knowledgeEvidence:
+          type: array
+          items:
+            type: string
+          description: Knowledge evidence requirements
+        assessmentConditions:
+          type: array
+          items:
+            type: string
+          description: Assessment conditions
+
+    UnitHistoryEntry:
+      type: object
+      required: [id, unitCode, unitTitle, source, lookedUpAt]
+      properties:
+        id:
+          type: number
+        unitCode:
+          type: string
+        unitTitle:
+          type: string
+        source:
+          type: string
+          description: "How it was looked up: 'code' or 'pdf'"
+        lookedUpAt:
+          type: string
+          format: date-time

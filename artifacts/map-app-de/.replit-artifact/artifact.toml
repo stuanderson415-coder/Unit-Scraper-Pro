@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Map App DE"
+description = "A web app for Australian VET trainers and curriculum designers that takes a unit of competency code or PDF, fetches the full unit from training.gov.au, and presents the elements and performance criteria in a structured, copy-friendly table."
+version = "1.0.0"
+id = "artifacts/map-app-de"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20505
+
+[services.development]
+run = "pnpm --filter @workspace/map-app-de run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/map-app-de", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/map-app-de/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20505"
+BASE_PATH = "/"
