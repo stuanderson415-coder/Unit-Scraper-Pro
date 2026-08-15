@@ -1,0 +1,1 @@
+- [TGA API approach](tga-api.md) — training.gov.au is a Nuxt SPA; must use their JSON API, not HTML scraping
