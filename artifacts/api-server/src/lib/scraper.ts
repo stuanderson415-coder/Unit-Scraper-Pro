@@ -330,7 +330,7 @@ export async function scrapeUnit(rawCode: string): Promise<UnitOfCompetency> {
         performanceEvidence = parseListSection(item.content);
         break;
       case "KnowledgeEvidence":
-        knowledgeEvidence = parseTopLevelListSection(item.content);
+        knowledgeEvidence = parseListSection(item.content);
         break;
       case "AssessmentConditions":
         assessmentConditions = parseListSection(item.content);
