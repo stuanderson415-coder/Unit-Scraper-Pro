@@ -181,7 +181,7 @@ function parseFoundationSkills(html: string): FoundationSkill[] {
 }
 
 /**
- * Extract bullet-point list items from PE / KE / Assessment Conditions HTML.
+ * Extract bullet-point list items from PE / Assessment Conditions HTML.
  * Returns each <li> as a separate string (direct text only, no nested ul content).
  * If no list items, returns paragraph texts.
  */
@@ -189,7 +189,6 @@ function parseListSection(html: string): string[] {
   const $ = cheerio.load(html);
   const items: string[] = [];
 
-  // All li elements, direct text only (strip nested ul/ol)
   $("li").each((_, li) => {
     const cloned = $(li).clone();
     cloned.find("ul, ol").remove();
@@ -199,7 +198,33 @@ function parseListSection(html: string): string[] {
 
   if (items.length > 0) return items;
 
-  // Fallback: paragraphs
+  $("p").each((_, p) => {
+    const text = $(p).text().trim().replace(/\s+/g, " ");
+    if (text) items.push(text);
+  });
+
+  return items;
+}
+
+/**
+ * Extract only TOP-LEVEL list items (no nested <li> descendants).
+ * Used for Knowledge Evidence where sub-bullets are not needed.
+ */
+function parseTopLevelListSection(html: string): string[] {
+  const $ = cheerio.load(html);
+  const items: string[] = [];
+
+  // Only li elements that have no li ancestor
+  $("li").each((_, li) => {
+    if ($(li).parents("li").length > 0) return;
+    const cloned = $(li).clone();
+    cloned.find("ul, ol").remove();
+    const text = cloned.text().trim().replace(/\s+/g, " ");
+    if (text) items.push(text);
+  });
+
+  if (items.length > 0) return items;
+
   $("p").each((_, p) => {
     const text = $(p).text().trim().replace(/\s+/g, " ");
     if (text) items.push(text);
@@ -305,7 +330,7 @@ export async function scrapeUnit(rawCode: string): Promise<UnitOfCompetency> {
         performanceEvidence = parseListSection(item.content);
         break;
       case "KnowledgeEvidence":
-        knowledgeEvidence = parseListSection(item.content);
+        knowledgeEvidence = parseTopLevelListSection(item.content);
         break;
       case "AssessmentConditions":
         assessmentConditions = parseListSection(item.content);
