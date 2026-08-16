@@ -2,20 +2,24 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { UnitOfCompetency } from '@workspace/api-client-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Minus, Plus } from 'lucide-react';
 
-const NUM_TASKS = 5;
+const MIN_TASKS = 1;
+const MAX_TASKS = 12;
+const DEFAULT_TASKS = 5;
 
 // ── Persistence ────────────────────────────────────────────────────────────────
 
-type CellState   = Record<string, string[]>; // rowKey → one string per assessment column
-type HeaderState = string[];                  // one label per assessment column
+type CellState   = Record<string, string[]>;
+type HeaderState = string[];
 
 const cellKey   = (code: string) => `map-app-de:cells:${code}`;
 const headerKey = (code: string) => `map-app-de:headers:${code}`;
+const numKey    = (code: string) => `map-app-de:numtasks:${code}`;
 
-const defaultHeaders = () =>
-  Array.from({ length: NUM_TASKS }, (_, i) => `Assessment ${i + 1}`);
+function defaultHeaders(n: number): string[] {
+  return Array.from({ length: n }, (_, i) => `Assessment ${i + 1}`);
+}
 
 function load<T>(key: string, fallback: () => T): T {
   try {
@@ -62,23 +66,16 @@ function CellInput({ value, onChange, placeholder, className = '' }: InputProps)
 }
 
 // ── Row model ──────────────────────────────────────────────────────────────────
-//
-// span     – full-width spanning row (section header, element heading, sub-group label)
-// data     – descriptor in col-1 + editable cells in assessment columns
-//
 
 type SpanRow = {
   kind:  'span';
   key:   string;
   label: string;
-  style: 'element'   // "1. Element title"  – blue-tinted
-       | 'section'   // "Performance Evidence" etc. – dark
-       | 'subgroup'; // "Approaches to service delivery:" – italic, light
+  style: 'element' | 'section' | 'subgroup';
 };
 type DataRow = { kind: 'data'; key: string; label: string };
 type Row = SpanRow | DataRow;
 
-/** Items that end with ":" are treated as sub-group labels (no task cells). */
 function isSubGroup(text: string) {
   return text.trimEnd().endsWith(':');
 }
@@ -86,30 +83,20 @@ function isSubGroup(text: string) {
 function buildRows(unit: UnitOfCompetency): Row[] {
   const rows: Row[] = [];
 
-  // ── Elements & Performance Criteria ──────────────────────────────────────────
+  // Elements & Performance Criteria
   for (const el of unit.elements) {
-    rows.push({
-      kind:  'span',
-      key:   `el-${el.number}`,
-      label: `${el.number}. ${el.title}`,
-      style: 'element',
-    });
+    rows.push({ kind: 'span', key: `el-${el.number}`, label: `${el.number}. ${el.title}`, style: 'element' });
     for (const pc of el.performanceCriteria) {
-      rows.push({
-        kind:  'data',
-        key:   `pc-${el.number}-${pc.number}`,
-        label: `${pc.number}  ${pc.text}`,
-      });
+      rows.push({ kind: 'data', key: `pc-${el.number}-${pc.number}`, label: `${pc.number}  ${pc.text}` });
     }
   }
 
-  // ── Foundation Skills ─────────────────────────────────────────────────────────
+  // Foundation Skills
   const fs = unit.foundationSkills ?? [];
   if (fs.length > 0) {
     rows.push({ kind: 'span', key: 'fs-hdr', label: 'Foundation Skills', style: 'section' });
     fs.forEach((s, i) => {
       if (s.skill) {
-        // Skill type becomes a sub-group label; description is the data row
         rows.push({ kind: 'span', key: `fs-sg-${i}`, label: `${s.skill}:`, style: 'subgroup' });
         rows.push({ kind: 'data', key: `fs-${i}`, label: s.description });
       } else if (isSubGroup(s.description)) {
@@ -120,7 +107,7 @@ function buildRows(unit: UnitOfCompetency): Row[] {
     });
   }
 
-  // ── Performance Evidence ──────────────────────────────────────────────────────
+  // Performance Evidence
   const pe = unit.performanceEvidence ?? [];
   if (pe.length > 0) {
     rows.push({ kind: 'span', key: 'pe-hdr', label: 'Performance Evidence', style: 'section' });
@@ -135,7 +122,7 @@ function buildRows(unit: UnitOfCompetency): Row[] {
     });
   }
 
-  // ── Knowledge Evidence ────────────────────────────────────────────────────────
+  // Knowledge Evidence
   const ke = unit.knowledgeEvidence ?? [];
   if (ke.length > 0) {
     rows.push({ kind: 'span', key: 'ke-hdr', label: 'Knowledge Evidence', style: 'section' });
@@ -150,7 +137,7 @@ function buildRows(unit: UnitOfCompetency): Row[] {
     });
   }
 
-  // ── Assessment Conditions ─────────────────────────────────────────────────────
+  // Assessment Conditions
   const ac = unit.assessmentConditions ?? [];
   if (ac.length > 0) {
     rows.push({ kind: 'span', key: 'ac-hdr', label: 'Assessment Conditions', style: 'section' });
@@ -171,25 +158,46 @@ function buildRows(unit: UnitOfCompetency): Row[] {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
+  const [numTasks, setNumTasksState] = useState<number>(() =>
+    load(numKey(unit.code), () => DEFAULT_TASKS)
+  );
   const [cells,   setCells]   = useState<CellState>  (() => load(cellKey(unit.code),   () => ({})));
-  const [headers, setHeaders] = useState<HeaderState>(() => load(headerKey(unit.code), defaultHeaders));
+  const [headers, setHeaders] = useState<HeaderState>(() =>
+    load(headerKey(unit.code), () => defaultHeaders(load(numKey(unit.code), () => DEFAULT_TASKS)))
+  );
 
   // Reload when unit changes
   useEffect(() => {
+    const n = load(numKey(unit.code), () => DEFAULT_TASKS);
+    setNumTasksState(n);
     setCells(load(cellKey(unit.code), () => ({})));
-    setHeaders(load(headerKey(unit.code), defaultHeaders));
+    setHeaders(load(headerKey(unit.code), () => defaultHeaders(n)));
   }, [unit.code]);
 
-  // Persist cells
-  useEffect(() => { persist(cellKey(unit.code), cells); }, [cells, unit.code]);
+  // Persist
+  useEffect(() => { persist(cellKey(unit.code),   cells);    }, [cells,   unit.code]);
+  useEffect(() => { persist(headerKey(unit.code), headers);  }, [headers, unit.code]);
+  useEffect(() => { persist(numKey(unit.code),    numTasks); }, [numTasks, unit.code]);
 
-  // Persist headers
-  useEffect(() => { persist(headerKey(unit.code), headers); }, [headers, unit.code]);
+  // Adjust columns — grow: append default headers; shrink: trim (data kept)
+  const setNumTasks = useCallback((n: number) => {
+    const clamped = Math.min(MAX_TASKS, Math.max(MIN_TASKS, n));
+    setNumTasksState(clamped);
+    setHeaders((prev) => {
+      if (clamped > prev.length) {
+        return [
+          ...prev,
+          ...Array.from({ length: clamped - prev.length }, (_, i) => `Assessment ${prev.length + i + 1}`),
+        ];
+      }
+      return prev.slice(0, clamped);
+    });
+  }, []);
 
   const setCell = useCallback((rowKey: string, idx: number, value: string) => {
     setCells((prev) => {
-      const cur = prev[rowKey] ?? Array<string>(NUM_TASKS).fill('');
-      const next = [...cur];
+      const cur = prev[rowKey] ?? [];
+      const next = Array.from({ length: Math.max(cur.length, idx + 1) }, (_, i) => cur[i] ?? '');
       next[idx] = value;
       return { ...prev, [rowKey]: next };
     });
@@ -207,11 +215,12 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
 
   const hasContent =
     Object.values(cells).some((arr) => arr.some((v) => v.trim())) ||
-    headers.some((h, i) => h !== `Assessment ${i + 1}`);
+    headers.some((h, i) => h !== `Assessment ${i + 1}`) ||
+    numTasks !== DEFAULT_TASKS;
 
   const clearAll = () => {
     setCells({});
-    setHeaders(defaultHeaders());
+    setHeaders(defaultHeaders(numTasks));
   };
 
   const isCurrent = unit.status?.toLowerCase() === 'current';
@@ -220,7 +229,7 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
   return (
     <div className="space-y-4" data-testid="unit-display">
 
-      {/* ── Unit header bar ── */}
+      {/* Unit header bar */}
       <div className="flex items-start justify-between gap-4 pb-4 border-b border-gray-200">
         <div className="space-y-1">
           <div className="flex items-center gap-3 flex-wrap">
@@ -238,23 +247,47 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
           </div>
           <p className="text-base font-semibold text-gray-900">{unit.title}</p>
         </div>
-        {hasContent && (
-          <Button variant="ghost" size="sm" onClick={clearAll}
-            className="text-gray-400 hover:text-red-500 shrink-0 text-xs">
-            <RotateCcw className="w-3 h-3 mr-1" />Clear all
-          </Button>
-        )}
+
+        {/* Controls: column stepper + clear */}
+        <div className="flex items-center gap-4 shrink-0">
+          {/* Assessment column stepper */}
+          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 shadow-sm">
+            <span className="text-xs font-medium text-gray-500 whitespace-nowrap">Assessments</span>
+            <button
+              onClick={() => setNumTasks(numTasks - 1)}
+              disabled={numTasks <= MIN_TASKS}
+              className="w-6 h-6 flex items-center justify-center rounded text-purple-700 hover:bg-purple-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="Remove a column"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+            <span className="text-sm font-bold text-gray-800 w-4 text-center">{numTasks}</span>
+            <button
+              onClick={() => setNumTasks(numTasks + 1)}
+              disabled={numTasks >= MAX_TASKS}
+              className="w-6 h-6 flex items-center justify-center rounded text-purple-700 hover:bg-purple-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="Add a column"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
+
+          {hasContent && (
+            <Button variant="ghost" size="sm" onClick={clearAll}
+              className="text-gray-400 hover:text-red-500 text-xs">
+              <RotateCcw className="w-3 h-3 mr-1" />Clear all
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* ── Mapping table ── */}
+      {/* Mapping table */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm" style={{ minWidth: 720 }} data-testid="mapping-table">
+        <table className="w-full border-collapse text-sm" style={{ minWidth: 480 + numTasks * 120 }} data-testid="mapping-table">
           <colgroup>
-            {/* Descriptor column */}
             <col style={{ width: '34%', minWidth: 240 }} />
-            {/* Assessment columns */}
-            {Array.from({ length: NUM_TASKS }, (_, i) => (
-              <col key={i} style={{ width: `${66 / NUM_TASKS}%`, minWidth: 120 }} />
+            {Array.from({ length: numTasks }, (_, i) => (
+              <col key={i} style={{ width: `${66 / numTasks}%`, minWidth: 110 }} />
             ))}
           </colgroup>
 
@@ -262,7 +295,7 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
             {/* Application banner */}
             {unit.description && (
               <tr>
-                <td colSpan={1 + NUM_TASKS}
+                <td colSpan={1 + numTasks}
                   className="border border-gray-400 bg-gray-800 text-white px-4 py-2.5 text-sm leading-relaxed">
                   <span className="font-semibold text-gray-300 text-xs uppercase tracking-wider mr-2">Application</span>
                   {unit.description}
@@ -270,15 +303,15 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
               </tr>
             )}
 
-            {/* Column header row — first col fixed, assessment cols editable */}
+            {/* Column header row */}
             <tr className="bg-gray-100">
               <th className="border border-gray-400 px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wide align-top">
                 Performance Criteria
               </th>
-              {headers.map((h, i) => (
+              {Array.from({ length: numTasks }, (_, i) => (
                 <th key={i} className="border border-gray-400 p-0 align-top font-normal">
                   <CellInput
-                    value={h}
+                    value={headers[i] ?? `Assessment ${i + 1}`}
                     onChange={(v) => setHeader(i, v)}
                     placeholder={`Assessment ${i + 1}`}
                     className="text-xs font-semibold text-gray-700 text-center p-2"
@@ -290,14 +323,11 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
 
           <tbody>
             {rows.map((row) => {
-
-              /* ── Spanning rows ── */
               if (row.kind === 'span') {
                 if (row.style === 'element') {
-                  // Element heading — bold, blue tint, slightly larger
                   return (
                     <tr key={row.key}>
-                      <td colSpan={1 + NUM_TASKS}
+                      <td colSpan={1 + numTasks}
                         className="border border-gray-400 bg-blue-50 px-3 py-2 font-bold text-blue-900 text-sm">
                         {row.label}
                       </td>
@@ -305,20 +335,18 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
                   );
                 }
                 if (row.style === 'section') {
-                  // Section header — dark, uppercase
                   return (
                     <tr key={row.key}>
-                      <td colSpan={1 + NUM_TASKS}
+                      <td colSpan={1 + numTasks}
                         className="border border-gray-400 bg-gray-700 text-white px-3 py-2 font-semibold text-xs uppercase tracking-wider">
                         {row.label}
                       </td>
                     </tr>
                   );
                 }
-                // Sub-group label — light, italic
                 return (
                   <tr key={row.key}>
-                    <td colSpan={1 + NUM_TASKS}
+                    <td colSpan={1 + numTasks}
                       className="border border-gray-300 bg-gray-50 px-3 py-1.5 text-xs italic text-gray-600">
                       {row.label}
                     </td>
@@ -326,13 +354,12 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
                 );
               }
 
-              /* ── Data rows — descriptor + editable assessment cells ── */
               return (
                 <tr key={row.key} className="even:bg-gray-50 hover:bg-blue-50/20">
                   <td className="border border-gray-300 px-3 py-2 text-gray-800 leading-snug align-top text-sm">
                     {row.label}
                   </td>
-                  {Array.from({ length: NUM_TASKS }, (_, i) => (
+                  {Array.from({ length: numTasks }, (_, i) => (
                     <td key={i} className="border border-gray-300 p-0 align-top">
                       <CellInput
                         value={cellValue(row.key, i)}
@@ -348,7 +375,7 @@ export function UnitDisplay({ unit }: { unit: UnitOfCompetency }) {
 
             {rows.length === 0 && (
               <tr>
-                <td colSpan={1 + NUM_TASKS}
+                <td colSpan={1 + numTasks}
                   className="border border-gray-300 py-12 text-center text-gray-400 text-sm">
                   No content found for this unit.
                 </td>
