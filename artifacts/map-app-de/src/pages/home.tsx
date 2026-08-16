@@ -24,7 +24,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 overflow-hidden font-sans">
+    <div className="flex h-screen w-full bg-zinc-100 overflow-hidden font-sans">
       <HistorySidebar onSelect={handleHistorySelect} />
       
       <main className="flex-1 flex flex-col h-full relative">

@@ -33,14 +33,15 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string) => void 
   };
 
   return (
-    <div className="w-80 border-r bg-white flex flex-col h-full overflow-hidden shrink-0 hidden md:flex">
-      <div className="p-4 border-b flex items-center justify-between bg-slate-50/50">
-        <div className="flex items-center gap-2 font-medium text-slate-700">
-          <History className="w-4 h-4" />
+    <div className="w-80 flex flex-col h-full overflow-hidden shrink-0 hidden md:flex bg-zinc-800">
+      <div className="p-4 border-b border-zinc-700 flex items-center justify-between bg-zinc-900">
+        <div className="flex items-center gap-2 font-medium text-zinc-100">
+          <History className="w-4 h-4 text-purple-400" />
           Recent Lookups
         </div>
         {(history?.length ?? 0) > 0 && !isLoading && (
-          <Button variant="ghost" size="icon" onClick={handleClear} title="Clear history" className="h-8 w-8 text-slate-500 hover:text-destructive hover:bg-destructive/10">
+          <Button variant="ghost" size="icon" onClick={handleClear} title="Clear history"
+            className="h-8 w-8 text-zinc-400 hover:text-red-400 hover:bg-zinc-700">
             <Trash2 className="w-4 h-4" />
           </Button>
         )}
@@ -50,49 +51,49 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string) => void 
           <div className="p-4 space-y-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-4 w-3/4 bg-zinc-700" />
+                <Skeleton className="h-3 w-1/2 bg-zinc-700" />
               </div>
             ))}
           </div>
         ) : history?.length === 0 || !history ? (
-          <div className="p-8 text-center text-sm text-slate-500 flex flex-col items-center gap-3 mt-10">
-            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-2">
-              <MapIcon className="w-6 h-6 text-slate-300" />
+          <div className="p-8 text-center text-sm text-zinc-400 flex flex-col items-center gap-3 mt-10">
+            <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center mb-2">
+              <MapIcon className="w-6 h-6 text-zinc-500" />
             </div>
             <p>No recent lookups.</p>
-            <p className="text-xs text-slate-400">Search for a unit code or upload a PDF to see it here.</p>
+            <p className="text-xs text-zinc-500">Search for a unit code or upload a PDF to see it here.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-zinc-700">
             {history.map(entry => (
-              <div 
-                key={entry.id} 
-                className="p-4 hover:bg-slate-50 cursor-pointer group transition-colors flex gap-3 items-start"
+              <div
+                key={entry.id}
+                className="p-4 hover:bg-purple-600/20 cursor-pointer group transition-colors flex gap-3 items-start border-l-2 border-transparent hover:border-purple-500"
                 onClick={() => onSelect(entry.unitCode)}
               >
                 <div className="mt-0.5">
                   {entry.source === 'pdf' ? (
-                    <FileText className="w-4 h-4 text-primary" />
+                    <FileText className="w-4 h-4 text-purple-400" />
                   ) : (
-                    <Search className="w-4 h-4 text-primary" />
+                    <Search className="w-4 h-4 text-purple-400" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm text-slate-900 truncate">
+                  <div className="font-medium text-sm text-zinc-100 truncate">
                     {entry.unitCode}
                   </div>
-                  <div className="text-xs text-slate-500 truncate mt-0.5" title={entry.unitTitle}>
+                  <div className="text-xs text-zinc-400 truncate mt-0.5" title={entry.unitTitle}>
                     {entry.unitTitle}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-1.5 uppercase tracking-wider font-medium">
+                  <div className="text-[10px] text-zinc-500 mt-1.5 uppercase tracking-wider font-medium">
                     {format(new Date(entry.lookedUpAt), 'MMM d, h:mm a')}
                   </div>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-destructive hover:bg-destructive/10 shrink-0"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-red-400 hover:bg-zinc-700 shrink-0"
                   onClick={(e) => handleDelete(entry.id, e)}
                   title="Remove from history"
                 >
