@@ -73,5 +73,10 @@
     "vite": "catalog:",
     "wouter": "^3.3.5",
     "zod": "catalog:"
+  },
+  "dependencies": {
+    "@types/file-saver": "^2.0.7",
+    "docx": "^9.7.1",
+    "file-saver": "^2.0.5"
   }
 }
