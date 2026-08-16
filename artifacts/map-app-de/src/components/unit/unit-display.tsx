@@ -2,9 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { UnitOfCompetency } from '@workspace/api-client-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, FileDown, FileText, RefreshCw, ClipboardCopy, Check } from 'lucide-react';
+import { RotateCcw, FileText, RefreshCw, ClipboardCopy, Check } from 'lucide-react';
 import { buildRows } from '@/lib/unit-rows';
-import { exportToWord } from '@/lib/export-docx';
 import { exportToMarkdown } from '@/lib/export-md';
 import { copyTableToClipboard } from '@/lib/copy-table';
 
@@ -17,7 +16,7 @@ const cellKey   = (code: string) => `map-app-de:cells:${code}`;
 const headerKey = (code: string) => `map-app-de:headers:${code}`;
 
 function defaultHeaders(n: number): string[] {
-  return Array.from({ length: n }, (_, i) => `Assessment ${i + 1}`);
+  return Array.from({ length: n }, (_, i) => `Task ${i + 1}`);
 }
 function load<T>(key: string, fallback: () => T): T {
   try { const r = localStorage.getItem(key); return r ? (JSON.parse(r) as T) : fallback(); }
@@ -67,7 +66,6 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
   const [headers, setHeaders] = useState<HeaderState>(() =>
     load(headerKey(unit.code), () => defaultHeaders(numTasks)),
   );
-  const [exportingDocx, setExportingDocx] = useState(false);
   const [exportingMd,   setExportingMd]   = useState(false);
   const [copied,        setCopied]         = useState(false);
 
@@ -82,7 +80,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
   useEffect(() => {
     setHeaders(prev => {
       if (numTasks > prev.length) {
-        return [...prev, ...Array.from({ length: numTasks - prev.length }, (_, i) => `Assessment ${prev.length + i + 1}`)];
+        return [...prev, ...Array.from({ length: numTasks - prev.length }, (_, i) => `Task ${prev.length + i + 1}`)];
       }
       return prev.slice(0, numTasks);
     });
@@ -111,12 +109,6 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
   const regenerate = () => {
     setCells({});
     setHeaders(defaultHeaders(numTasks));
-  };
-
-  const handleExportDocx = async () => {
-    setExportingDocx(true);
-    try { await exportToWord(unit, numTasks, headers, cells, docTitle); }
-    finally { setExportingDocx(false); }
   };
 
   const handleExportMd = () => {
@@ -169,17 +161,6 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
             {copied
               ? <><Check className="w-3.5 h-3.5 mr-1.5" />Copied!</>
               : <><ClipboardCopy className="w-3.5 h-3.5 mr-1.5" />Copy Table</>}
-          </Button>
-
-          {/* Export to Word */}
-          <Button
-            onClick={handleExportDocx}
-            disabled={exportingDocx}
-            className="bg-zinc-900 hover:bg-zinc-700 text-white text-xs shadow-sm"
-            size="sm"
-          >
-            <FileDown className="w-3.5 h-3.5 mr-1.5" />
-            {exportingDocx ? 'Exporting…' : 'Export Word'}
           </Button>
 
           {/* Export to Markdown */}

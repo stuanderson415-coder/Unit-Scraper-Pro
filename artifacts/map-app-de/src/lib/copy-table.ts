@@ -34,6 +34,10 @@ function th(content: string, style: string) {
   return `<th style="${style}">${esc(content)}</th>`;
 }
 
+function taskLabel(headers: string[], i: number) {
+  return (headers[i] && headers[i].trim()) ? headers[i].trim() : `Task ${i + 1}`;
+}
+
 function buildHtml(
   unit: UnitOfCompetency,
   numTasks: number,
@@ -45,18 +49,18 @@ function buildHtml(
   const span = `colspan="${cols}"`;
   const lines: string[] = [`<table style="${STYLES.table}">`];
 
-  // Application
-  if (unit.description) {
-    lines.push(`<tr>${td('Application:  ' + unit.description, STYLES.app, ` ${span}`)}</tr>`);
-  }
-
-  // Column headers
+  // ── Column headers first — paste targets (Word/Docs) need thead at top ──
   lines.push('<thead><tr>');
   lines.push(th('Performance Criteria / Requirement', STYLES.hdr));
   for (let i = 0; i < numTasks; i++) {
-    lines.push(th(headers[i] ?? `Assessment ${i + 1}`, STYLES.hdr));
+    lines.push(th(taskLabel(headers, i), STYLES.hdr));
   }
   lines.push('</tr></thead><tbody>');
+
+  // Application banner inside tbody (doesn't interfere with column sizing)
+  if (unit.description) {
+    lines.push(`<tr>${td('Application: ' + unit.description, STYLES.app, ` ${span}`)}</tr>`);
+  }
 
   // Content rows
   for (const row of rows) {
@@ -91,10 +95,13 @@ function buildTsv(
 ): string {
   const rows = buildRows(unit);
   const clean = (s: string) => s.replace(/\t/g, ' ').replace(/\r?\n/g, ' ');
+
+  // Always generate exactly numTasks header columns
+  const taskHeaders = Array.from({ length: numTasks }, (_, i) => taskLabel(headers, i));
   const lines: string[] = [];
 
-  // Header row
-  lines.push(['Performance Criteria / Requirement', ...headers.map((h, i) => h || `Assessment ${i + 1}`)].map(clean).join('\t'));
+  // Header row first
+  lines.push(['Performance Criteria / Requirement', ...taskHeaders].map(clean).join('\t'));
 
   if (unit.description) {
     lines.push([`Application: ${unit.description}`, ...Array(numTasks).fill('')].map(clean).join('\t'));
