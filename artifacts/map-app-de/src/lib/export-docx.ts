@@ -1,7 +1,24 @@
+/**
+ * Word (.docx) export — uses docx v9.
+ *
+ * Fixed v9 shading requirement: `color` must be present alongside `fill`.
+ */
 import {
-  Document, Packer, Table, TableRow, TableCell, Paragraph, TextRun,
-  WidthType, AlignmentType, BorderStyle, ShadingType, VerticalAlign,
-  HeightRule, PageOrientation,
+  AlignmentType,
+  BorderStyle,
+  Document,
+  HeightRule,
+  PageOrientation,
+  Packer,
+  Paragraph,
+  ShadingType,
+  Table,
+  TableBorders,
+  TableCell,
+  TableRow,
+  TextRun,
+  VerticalAlign,
+  WidthType,
 } from 'docx';
 import { saveAs } from 'file-saver';
 import type { UnitOfCompetency } from '@workspace/api-client-react';
@@ -9,64 +26,81 @@ import { buildRows } from './unit-rows';
 
 type CellState = Record<string, string[]>;
 
-// ── Measurements (A4 landscape with 1.5cm margins) ──────────────────────────
-// A4 landscape: 16838 twips wide; margins 2 × 850 = 1700; content ≈ 15138
-const PAGE_W = 15138;
+// ── Page geometry (A4 landscape, 1.5 cm margins) ─────────────────────────────
+const PAGE_W   = 15138; // twips of usable width  (16838 − 2×850)
+const PAGE_H   = 11906;
+const MARGIN   = 850;   // twips ≈ 1.5 cm
 
-// ── Colour palette ────────────────────────────────────────────────────────────
-const C = {
-  white:      'FFFFFF',
-  black:      '000000',
-  darkGrey:   '374151',  // section headers
-  medGrey:    'D1D5DB',  // header row bg
-  lightGrey:  'F3F4F6',  // subgroup rows
-  elemGrey:   'E5E7EB',  // element rows
+// ── Colour palette (hex without #) ───────────────────────────────────────────
+const WHITE     = 'FFFFFF';
+const BLACK     = '000000';
+const DARK_GREY = '374151';   // section headers bg
+const MID_GREY  = 'D1D5DB';   // column header bg
+const LITE_GREY = 'F3F4F6';   // subgroup rows & element rows
+const BORDER_C  = '9CA3AF';   // cell border colour
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const borderSide = { style: BorderStyle.SINGLE, size: 6, color: BORDER_C } as const;
+const tableBorders: TableBorders = {
+  top:     borderSide,
+  bottom:  borderSide,
+  left:    borderSide,
+  right:   borderSide,
+  insideH: borderSide,
+  insideV: borderSide,
 };
 
-// ── Border helper ─────────────────────────────────────────────────────────────
-const border = (size = 6, color = '9CA3AF') => ({
-  top:    { style: BorderStyle.SINGLE, size, color },
-  bottom: { style: BorderStyle.SINGLE, size, color },
-  left:   { style: BorderStyle.SINGLE, size, color },
-  right:  { style: BorderStyle.SINGLE, size, color },
-});
+function para(text: string, opts: { bold?: boolean; italic?: boolean; color?: string; size?: number } = {}) {
+  return new Paragraph({
+    spacing: { before: 40, after: 40 },
+    children: [
+      new TextRun({
+        text,
+        bold:    opts.bold    ?? false,
+        italics: opts.italic  ?? false,
+        color:   opts.color   ?? BLACK,
+        size:    opts.size    ?? 20,          // 20 half-pts = 10 pt
+        font:    'Calibri',
+      }),
+    ],
+  });
+}
 
-// ── Cell helpers ──────────────────────────────────────────────────────────────
-function spanCell(
-  text: string,
-  colSpan: number,
-  opts: { bold?: boolean; italic?: boolean; fill?: string; textColor?: string; fontSize?: number } = {},
-): TableCell {
-  const { bold = false, italic = false, fill = C.white, textColor = C.black, fontSize = 20 } = opts;
+/** Full-width spanning cell. */
+function spanCell(text: string, colSpan: number, opts: {
+  fill?: string; bold?: boolean; italic?: boolean; textColor?: string;
+} = {}) {
+  const fill = opts.fill ?? WHITE;
   return new TableCell({
     columnSpan: colSpan,
-    width: { size: PAGE_W, type: WidthType.DXA },
-    borders: border(),
-    shading: fill !== C.white ? { type: ShadingType.SOLID, fill } : undefined,
+    verticalAlign: VerticalAlign.CENTER,
+    shading: fill !== WHITE
+      ? { type: ShadingType.SOLID, fill, color: fill }   // v9: color required
+      : undefined,
     children: [
-      new Paragraph({
-        children: [
-          new TextRun({ text, bold, italics: italic, color: textColor, size: fontSize }),
-        ],
-      }),
+      para(text, { bold: opts.bold, italic: opts.italic, color: opts.textColor ?? BLACK }),
     ],
   });
 }
 
-function dataCell(text: string, width: number, opts: { bold?: boolean } = {}): TableCell {
+/** Single data cell with explicit width. */
+function dataCell(text: string, width: number, opts: { bold?: boolean; fill?: string } = {}) {
+  const fill = opts.fill ?? WHITE;
   return new TableCell({
     width: { size: width, type: WidthType.DXA },
-    borders: border(),
     verticalAlign: VerticalAlign.TOP,
+    shading: fill !== WHITE
+      ? { type: ShadingType.SOLID, fill, color: fill }
+      : undefined,
     children: [
-      new Paragraph({
-        children: [new TextRun({ text, bold: opts.bold ?? false, size: 18 })],
-      }),
+      para(text, { bold: opts.bold }),
     ],
   });
 }
 
-// ── Main export ───────────────────────────────────────────────────────────────
+// ── Main ──────────────────────────────────────────────────────────────────────
+
 export async function exportToWord(
   unit: UnitOfCompetency,
   numTasks: number,
@@ -74,109 +108,111 @@ export async function exportToWord(
   cells: CellState,
   docTitle: string,
 ): Promise<void> {
-  const colCount = numTasks + 1;
-  const criteriaW = Math.round(PAGE_W * 0.34);
-  const assessW   = Math.round((PAGE_W - criteriaW) / numTasks);
-
-  const rows = buildRows(unit);
+  const colCount   = numTasks + 1;
+  const criteriaW  = Math.round(PAGE_W * 0.36);
+  const assessW    = Math.round((PAGE_W - criteriaW) / numTasks);
+  const rows       = buildRows(unit);
   const tableRows: TableRow[] = [];
 
-  // ── Application row ────────────────────────────────────────────────────────
+  // ── Application banner ────────────────────────────────────────────────────
   if (unit.description) {
     tableRows.push(new TableRow({
       children: [
-        spanCell(`Application: ${unit.description}`, colCount, {
-          fill: C.darkGrey, textColor: C.white, bold: false, fontSize: 18,
+        spanCell(`Application:  ${unit.description}`, colCount, {
+          fill: DARK_GREY, textColor: WHITE,
         }),
       ],
     }));
   }
 
-  // ── Column header row ──────────────────────────────────────────────────────
+  // ── Column header row ─────────────────────────────────────────────────────
   tableRows.push(new TableRow({
     tableHeader: true,
-    height: { value: 500, rule: HeightRule.ATLEAST },
+    height: { value: 480, rule: HeightRule.ATLEAST },
     children: [
-      dataCell('Performance Criteria / Requirement', criteriaW, { bold: true }),
+      dataCell('Performance Criteria / Requirement', criteriaW, { bold: true, fill: MID_GREY }),
       ...Array.from({ length: numTasks }, (_, i) =>
-        dataCell(headers[i] ?? `Assessment ${i + 1}`, assessW, { bold: true }),
+        dataCell(headers[i] ?? `Assessment ${i + 1}`, assessW, { bold: true, fill: MID_GREY }),
       ),
     ],
   }));
 
-  // ── Content rows ───────────────────────────────────────────────────────────
+  // ── Content rows ──────────────────────────────────────────────────────────
   for (const row of rows) {
     if (row.kind === 'span') {
-      let fill = C.white;
-      let bold = false;
-      let italic = false;
-      let textColor = C.black;
+      let fill      = LITE_GREY;
+      let bold      = false;
+      let italic    = false;
+      let textColor = BLACK;
 
       if (row.style === 'element') {
-        fill = C.elemGrey; bold = true;
+        fill = LITE_GREY; bold = true;
       } else if (row.style === 'section') {
-        fill = C.darkGrey; bold = true; textColor = C.white;
+        fill = DARK_GREY; bold = true; textColor = WHITE;
       } else {
-        fill = C.lightGrey; italic = true;
+        fill = WHITE; italic = true;   // subgroup: plain white, italic
       }
 
       tableRows.push(new TableRow({
-        children: [spanCell(row.label, colCount, { fill, bold, italic, textColor, fontSize: 18 })],
+        children: [spanCell(row.label, colCount, { fill, bold, italic, textColor })],
       }));
     } else {
-      const cellValues = cells[row.key] ?? [];
+      const saved = cells[row.key] ?? [];
       tableRows.push(new TableRow({
         children: [
           dataCell(row.label, criteriaW),
           ...Array.from({ length: numTasks }, (_, i) =>
-            dataCell(cellValues[i] ?? '', assessW),
+            dataCell(saved[i] ?? '', assessW),
           ),
         ],
       }));
     }
   }
 
-  // ── Build document ─────────────────────────────────────────────────────────
+  // ── Build document ────────────────────────────────────────────────────────
   const heading = docTitle || `${unit.code} — ${unit.title}`;
 
   const doc = new Document({
+    creator:     'Map App 3.0',
+    description: 'VET Competency Mapping Matrix',
     sections: [{
       properties: {
         page: {
           size: {
             orientation: PageOrientation.LANDSCAPE,
-            width: 16838,
-            height: 11906,
+            width:  16838,
+            height: PAGE_H,
           },
-          margin: { top: 850, bottom: 850, left: 850, right: 850 },
+          margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN },
         },
       },
       children: [
-        // Document title
+        // Title
         new Paragraph({
-          children: [new TextRun({ text: heading, bold: true, size: 28 })],
-          spacing: { after: 200 },
+          spacing: { after: 120 },
+          children: [new TextRun({ text: heading, bold: true, size: 28, font: 'Calibri' })],
         }),
         // Subtitle
         new Paragraph({
+          spacing: { after: 240 },
           children: [
             new TextRun({
-              text: `Unit: ${unit.code}  |  ${unit.title}  |  ${numTasks} assessment task${numTasks !== 1 ? 's' : ''}`,
-              size: 20, color: '555555',
+              text: `${unit.code}  ·  ${unit.title}  ·  ${numTasks} assessment task${numTasks !== 1 ? 's' : ''}`,
+              size: 18, color: '555555', font: 'Calibri',
             }),
           ],
-          spacing: { after: 300 },
         }),
-        // The mapping table
+        // Mapping table
         new Table({
           width: { size: PAGE_W, type: WidthType.DXA },
+          borders: tableBorders,
           rows: tableRows,
         }),
       ],
     }],
   });
 
-  const blob = await Packer.toBlob(doc);
-  const filename = `${unit.code}_mapping${docTitle ? `_${docTitle.replace(/[^a-z0-9]/gi, '_').slice(0, 40)}` : ''}.docx`;
-  saveAs(blob, filename);
+  const blob     = await Packer.toBlob(doc);
+  const safeName = (docTitle || unit.code).replace(/[^a-z0-9_\-]/gi, '_').slice(0, 50);
+  saveAs(blob, `${unit.code}_mapping_${safeName}.docx`);
 }

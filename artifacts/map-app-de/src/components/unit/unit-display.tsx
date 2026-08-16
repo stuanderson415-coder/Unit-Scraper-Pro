@@ -2,9 +2,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { UnitOfCompetency } from '@workspace/api-client-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, FileDown, RefreshCw } from 'lucide-react';
+import { RotateCcw, FileDown, FileText, RefreshCw, ClipboardCopy, Check } from 'lucide-react';
 import { buildRows } from '@/lib/unit-rows';
 import { exportToWord } from '@/lib/export-docx';
+import { exportToMarkdown } from '@/lib/export-md';
+import { copyTableToClipboard } from '@/lib/copy-table';
 
 // ── Persistence ────────────────────────────────────────────────────────────────
 
@@ -65,7 +67,9 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
   const [headers, setHeaders] = useState<HeaderState>(() =>
     load(headerKey(unit.code), () => defaultHeaders(numTasks)),
   );
-  const [exporting, setExporting] = useState(false);
+  const [exportingDocx, setExportingDocx] = useState(false);
+  const [exportingMd,   setExportingMd]   = useState(false);
+  const [copied,        setCopied]         = useState(false);
 
   // Reload when unit changes
   useEffect(() => {
@@ -109,13 +113,22 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
     setHeaders(defaultHeaders(numTasks));
   };
 
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      await exportToWord(unit, numTasks, headers, cells, docTitle);
-    } finally {
-      setExporting(false);
-    }
+  const handleExportDocx = async () => {
+    setExportingDocx(true);
+    try { await exportToWord(unit, numTasks, headers, cells, docTitle); }
+    finally { setExportingDocx(false); }
+  };
+
+  const handleExportMd = () => {
+    setExportingMd(true);
+    try { exportToMarkdown(unit, numTasks, headers, cells, docTitle); }
+    finally { setExportingMd(false); }
+  };
+
+  const handleCopy = async () => {
+    await copyTableToClipboard(unit, numTasks, headers, cells);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const hasContent = Object.values(cells).some(a => a.some(v => v.trim()));
@@ -145,15 +158,40 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Copy table to clipboard */}
+          <Button
+            onClick={handleCopy}
+            variant="outline"
+            size="sm"
+            className={`text-xs border-zinc-400 hover:bg-zinc-100 transition-colors ${copied ? 'text-emerald-600 border-emerald-400' : 'text-zinc-700'}`}
+            title="Copy table — paste into Word, Google Docs, or Excel"
+          >
+            {copied
+              ? <><Check className="w-3.5 h-3.5 mr-1.5" />Copied!</>
+              : <><ClipboardCopy className="w-3.5 h-3.5 mr-1.5" />Copy Table</>}
+          </Button>
+
           {/* Export to Word */}
           <Button
-            onClick={handleExport}
-            disabled={exporting}
+            onClick={handleExportDocx}
+            disabled={exportingDocx}
             className="bg-zinc-900 hover:bg-zinc-700 text-white text-xs shadow-sm"
             size="sm"
           >
             <FileDown className="w-3.5 h-3.5 mr-1.5" />
-            {exporting ? 'Exporting…' : 'Export Word'}
+            {exportingDocx ? 'Exporting…' : 'Export Word'}
+          </Button>
+
+          {/* Export to Markdown */}
+          <Button
+            onClick={handleExportMd}
+            disabled={exportingMd}
+            variant="outline"
+            size="sm"
+            className="text-xs border-zinc-400 text-zinc-700 hover:bg-zinc-100"
+          >
+            <FileText className="w-3.5 h-3.5 mr-1.5" />
+            {exportingMd ? 'Exporting…' : 'Export MD'}
           </Button>
 
           {/* Regenerate: clear & rebuild with current numTasks */}
