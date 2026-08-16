@@ -31,9 +31,50 @@ export default function Home() {
         <ScrollArea className="flex-1 h-full">
           <div className="max-w-5xl mx-auto p-6 md:p-10 space-y-8 pb-24">
             
-            <header className="mb-8 hidden md:block">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Map App DE</h1>
-              <p className="text-sm text-slate-500">VET Curriculum Mapping Tool</p>
+            <header className="mb-8 hidden md:block space-y-3">
+              <div className="flex items-end gap-3 flex-wrap">
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Map App 3.0</h1>
+                {/* GPL-3.0 open-source badge */}
+                <a
+                  href="https://www.gnu.org/licenses/gpl-3.0.en.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mb-1"
+                >
+                  <img
+                    src="https://img.shields.io/badge/License-GPL%20v3-blue.svg"
+                    alt="License: GPL v3"
+                    className="h-5"
+                  />
+                </a>
+                {/* GitHub source badge */}
+                <a
+                  href="https://github.com/stuanderson415-coder/map-app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mb-1"
+                >
+                  <img
+                    src="https://img.shields.io/badge/Source-GitHub-181717?logo=github"
+                    alt="Source on GitHub"
+                    className="h-5"
+                  />
+                </a>
+              </div>
+              <p className="text-sm text-slate-600 max-w-2xl leading-relaxed">
+                This app is designed for vocational educators seeking to map their assessment tasks
+                to units of competency from nationally accredited training packages. This web
+                application is open source. License: GNU GPL&nbsp;v3.{' '}
+                <a
+                  href="https://github.com/stuanderson415-coder/map-app"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline underline-offset-2 hover:text-primary/80"
+                >
+                  View source on GitHub
+                </a>
+                .
+              </p>
             </header>
 
             <LookupForm 
