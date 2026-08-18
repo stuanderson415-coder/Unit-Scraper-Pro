@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import type { UnitOfCompetency } from '@workspace/api-client-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RotateCcw, FileText, RefreshCw, ClipboardCopy, Check } from 'lucide-react';
+import { RotateCcw, FileDown, FileText, RefreshCw, ClipboardCopy, Check } from 'lucide-react';
 import { buildRows } from '@/lib/unit-rows';
+import { exportToWord }    from '@/lib/export-doc';
 import { exportToMarkdown } from '@/lib/export-md';
 import { copyTableToClipboard } from '@/lib/copy-table';
 
@@ -66,6 +67,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
   const [headers, setHeaders] = useState<HeaderState>(() =>
     load(headerKey(unit.code), () => defaultHeaders(numTasks)),
   );
+  const [exportingDoc,  setExportingDoc]  = useState(false);
   const [exportingMd,   setExportingMd]   = useState(false);
   const [copied,        setCopied]         = useState(false);
 
@@ -109,6 +111,12 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
   const regenerate = () => {
     setCells({});
     setHeaders(defaultHeaders(numTasks));
+  };
+
+  const handleExportDoc = () => {
+    setExportingDoc(true);
+    try { exportToWord(unit, numTasks, headers, cells, docTitle); }
+    finally { setExportingDoc(false); }
   };
 
   const handleExportMd = () => {
@@ -161,6 +169,17 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
             {copied
               ? <><Check className="w-3.5 h-3.5 mr-1.5" />Copied!</>
               : <><ClipboardCopy className="w-3.5 h-3.5 mr-1.5" />Copy Table</>}
+          </Button>
+
+          {/* Export to Word */}
+          <Button
+            onClick={handleExportDoc}
+            disabled={exportingDoc}
+            className="bg-zinc-900 hover:bg-zinc-700 text-white text-xs shadow-sm"
+            size="sm"
+          >
+            <FileDown className="w-3.5 h-3.5 mr-1.5" />
+            {exportingDoc ? 'Exporting…' : 'Export Word'}
           </Button>
 
           {/* Export to Markdown */}
