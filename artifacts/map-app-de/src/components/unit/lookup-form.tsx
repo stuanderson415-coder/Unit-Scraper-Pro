@@ -1,40 +1,72 @@
 import { useState } from 'react';
-import { CalendarDays, Loader2, UserRound } from 'lucide-react';
-import { useLookupUnit, useUploadUnit, type UnitOfCompetency } from '@workspace/api-client-react';
+import { CalendarDays, FileText, Loader2, UserRound } from 'lucide-react';
+import { useLookupUnit, type UnitOfCompetency } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import type { StudentDetails } from '@/lib/rpl-state';
+import { createEmptyPreRplChecklist, type StudentDetails } from '@/lib/rpl-state';
 
 interface Props {
   onUnitLoaded: (unit: UnitOfCompetency, intake: StudentDetails) => void;
   isPending: boolean;
-  numTasks: number;
-  setNumTasks: (n: number) => void;
-  docTitle: string;
-  setDocTitle: (s: string) => void;
 }
 
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function LookupForm({ onUnitLoaded, isPending, numTasks, setNumTasks, docTitle, setDocTitle }: Props) {
+type ChecklistDocumentProps = {
+  id: string;
+  label: string;
+  checked: boolean;
+  fileName: string;
+  disabled: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  onFileChange: (file: File | null) => void;
+};
+
+function ChecklistDocument({ id, label, checked, fileName, disabled, onCheckedChange, onFileChange }: ChecklistDocumentProps) {
+  return (
+    <div className="rounded-lg border border-zinc-200 bg-white p-3">
+      <div className="flex items-start gap-2">
+        <Checkbox id={id} checked={checked} onCheckedChange={value => onCheckedChange(value === true)} disabled={disabled} />
+        <label htmlFor={id} className="cursor-pointer text-sm font-semibold leading-4 text-zinc-800">{label}</label>
+      </div>
+      <label className="mt-3 flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-2.5 py-2 text-xs font-medium text-zinc-600 transition hover:border-teal-600 hover:text-teal-800">
+        <FileText className="h-4 w-4 shrink-0" />
+        <span className="truncate">{fileName || 'Choose document'}</span>
+        <Input
+          type="file"
+          accept=".pdf,.doc,.docx"
+          className="sr-only"
+          onChange={event => onFileChange(event.target.files?.[0] ?? null)}
+          disabled={disabled}
+        />
+      </label>
+    </div>
+  );
+}
+
+export function LookupForm({ onUnitLoaded, isPending }: Props) {
   const [code, setCode] = useState('');
-  const [file, setFile] = useState<File | null>(null);
   const [intake, setIntake] = useState<StudentDetails>({
     name: '',
     studentNumber: '',
     trainerName: '',
     organisation: '',
     assessmentDate: today(),
+    preRplChecklist: createEmptyPreRplChecklist(),
   });
 
   const lookupUnit = useLookupUnit();
-  const uploadUnit = useUploadUnit();
   const { toast } = useToast();
-  const loading = lookupUnit.isPending || uploadUnit.isPending || isPending;
+  const loading = lookupUnit.isPending || isPending;
   const hasRequiredIntake = Boolean(intake.name.trim() && intake.studentNumber.trim());
   const updateIntake = (patch: Partial<StudentDetails>) => setIntake(current => ({ ...current, ...patch }));
+  const updateChecklist = (patch: Partial<StudentDetails['preRplChecklist']>) => setIntake(current => ({
+    ...current,
+    preRplChecklist: { ...current.preRplChecklist, ...patch },
+  }));
 
   const loadUnit = (unit: UnitOfCompetency) => {
     onUnitLoaded(unit, intake);
@@ -55,24 +87,6 @@ export function LookupForm({ onUnitLoaded, isPending, numTasks, setNumTasks, doc
         }),
       },
     );
-  };
-
-  const handleFileUpload = () => {
-    if (!file || !hasRequiredIntake) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    // @ts-expect-error: generated client accepts FormData at runtime.
-    uploadUnit.mutate(formData, {
-      onSuccess: unit => {
-        loadUnit(unit);
-        setFile(null);
-      },
-      onError: () => toast({
-        title: 'Upload failed',
-        description: 'Could not parse the PDF.',
-        variant: 'destructive',
-      }),
-    });
   };
 
   return (
@@ -129,17 +143,87 @@ export function LookupForm({ onUnitLoaded, isPending, numTasks, setNumTasks, doc
         </form>
 
         <details className="mt-5 border-t border-zinc-100 pt-3">
-          <summary className="cursor-pointer text-xs font-medium text-zinc-500 hover:text-zinc-800">Other options: upload a unit PDF or open assessment-mapping settings</summary>
-          <div className="mt-3 grid gap-3 rounded-lg bg-zinc-50 p-3 lg:grid-cols-[1fr_auto_auto]">
-            <Input type="file" accept=".pdf" onChange={event => setFile(event.target.files?.[0] || null)} disabled={loading} className="h-9 bg-white text-sm" />
-            <Button type="button" onClick={handleFileUpload} disabled={!file || !hasRequiredIntake || loading} variant="outline">
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Extract unit
-            </Button>
-            <div className="flex items-center gap-2 text-xs text-zinc-600">
-              <span>Assessment tasks</span>
-              <Input type="number" min={1} max={12} value={numTasks} onChange={event => setNumTasks(Math.min(12, Math.max(1, Number(event.target.value))))} className="h-9 w-14 bg-white text-center" />
-            </div>
-            <Input placeholder="Custom title for assessment-mapping export" value={docTitle} onChange={event => setDocTitle(event.target.value)} className="h-9 bg-white text-sm lg:col-span-3" />
+          <summary className="cursor-pointer text-xs font-medium text-zinc-500 hover:text-zinc-800">Other options: Pre-RPL checklist</summary>
+          <div className="mt-3 space-y-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+            <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="pre-rpl-interview"
+                  checked={intake.preRplChecklist.interviewCompleted}
+                  onCheckedChange={value => updateChecklist({ interviewCompleted: value === true })}
+                  disabled={loading}
+                />
+                <label htmlFor="pre-rpl-interview" className="cursor-pointer text-sm font-semibold text-zinc-800">Pre-RPL interview completed</label>
+              </div>
+              <label className="grid gap-1.5">
+                <span className="text-xs font-semibold text-zinc-700">Interview date</span>
+                <Input
+                  type="date"
+                  value={intake.preRplChecklist.interviewDate}
+                  onChange={event => updateChecklist({ interviewDate: event.target.value })}
+                  disabled={loading}
+                  className="bg-white"
+                />
+              </label>
+            </section>
+
+            <section className="border-t border-zinc-200 pt-4">
+              <div className="mb-3">
+                <h3 className="text-sm font-semibold text-zinc-900">Base documents provided</h3>
+                <p className="mt-1 text-xs text-zinc-500">Tick each item received and choose its supporting document.</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ChecklistDocument
+                  id="cv-resume"
+                  label="CV / résumé"
+                  checked={intake.preRplChecklist.cvResumeProvided}
+                  fileName={intake.preRplChecklist.cvResumeFileName}
+                  disabled={loading}
+                  onCheckedChange={checked => updateChecklist({ cvResumeProvided: checked })}
+                  onFileChange={file => updateChecklist({ cvResumeProvided: Boolean(file), cvResumeFileName: file?.name ?? '' })}
+                />
+                <ChecklistDocument
+                  id="academic-transcript"
+                  label="Academic transcript"
+                  checked={intake.preRplChecklist.academicTranscriptProvided}
+                  fileName={intake.preRplChecklist.academicTranscriptFileName}
+                  disabled={loading}
+                  onCheckedChange={checked => updateChecklist({ academicTranscriptProvided: checked })}
+                  onFileChange={file => updateChecklist({ academicTranscriptProvided: Boolean(file), academicTranscriptFileName: file?.name ?? '' })}
+                />
+                <ChecklistDocument
+                  id="position-description"
+                  label="Current position description"
+                  checked={intake.preRplChecklist.positionDescriptionProvided}
+                  fileName={intake.preRplChecklist.positionDescriptionFileName}
+                  disabled={loading}
+                  onCheckedChange={checked => updateChecklist({ positionDescriptionProvided: checked })}
+                  onFileChange={file => updateChecklist({ positionDescriptionProvided: Boolean(file), positionDescriptionFileName: file?.name ?? '' })}
+                />
+              </div>
+            </section>
+
+            <section className="grid gap-4 border-t border-zinc-200 pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:items-end">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="sharepoint-repository"
+                  checked={intake.preRplChecklist.sharePointRepositoryCreated}
+                  onCheckedChange={value => updateChecklist({ sharePointRepositoryCreated: value === true })}
+                  disabled={loading}
+                />
+                <label htmlFor="sharepoint-repository" className="cursor-pointer text-sm font-semibold text-zinc-800">SharePoint evidence repository created</label>
+              </div>
+              <label className="grid gap-1.5">
+                <span className="text-xs font-semibold text-zinc-700">SharePoint path</span>
+                <Input
+                  placeholder="https://… or document library / folder path"
+                  value={intake.preRplChecklist.sharePointPath}
+                  onChange={event => updateChecklist({ sharePointPath: event.target.value })}
+                  disabled={loading}
+                  className="bg-white"
+                />
+              </label>
+            </section>
           </div>
         </details>
       </CardContent>

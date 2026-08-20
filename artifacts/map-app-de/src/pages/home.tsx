@@ -62,13 +62,13 @@ export default function Home() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-[#26364d] bg-[#122238] text-white shadow-md">
-        <div className="flex h-full w-full items-center justify-between gap-4 px-4 md:px-8">
+      <header className="fixed inset-x-0 top-0 z-50 h-[4.5rem] border-b border-[#26364d] bg-[#122238] text-white shadow-md">
+        <div className="flex h-full w-full items-center justify-between gap-4 px-5 md:px-10">
           <div className="flex min-w-0 items-center gap-3">
             <img
               src="/rpl-companion-logo.png"
               alt="RPL Companion logo"
-              className="h-10 w-[65px] shrink-0 rounded-sm bg-white p-1 object-contain"
+              className="h-12 w-[78px] shrink-0 object-contain brightness-0 invert"
             />
             <div className="min-w-0">
               <h1 className="truncate text-lg font-bold tracking-tight sm:text-xl">RPL Companion</h1>
@@ -93,7 +93,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="mt-16 flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-300 font-sans">
+      <div className="mt-[4.5rem] flex h-[calc(100vh-4.5rem)] w-full overflow-hidden bg-zinc-300 font-sans">
         <HistorySidebar onSelect={handleHistorySelect} />
 
         <main className="flex-1 flex flex-col h-full relative">
@@ -104,10 +104,6 @@ export default function Home() {
                 <LookupForm
                   onUnitLoaded={handleUnitLoaded}
                   isPending={lookupUnit.isPending}
-                  numTasks={numTasks}
-                  setNumTasks={setNumTasks}
-                  docTitle={docTitle}
-                  setDocTitle={setDocTitle}
                 />
               )}
 
@@ -144,7 +140,7 @@ export default function Home() {
                   </div>
                   <h3 className="text-xl font-semibold text-zinc-800 mb-2 tracking-tight">Start an RPL assessment</h3>
                   <p className="text-zinc-500 max-w-md leading-relaxed text-sm">
-                    Enter a unit code above to fetch a unit from training.gov.au, or upload a PDF document.
+                    Enter a unit code above to fetch the unit from training.gov.au and begin the RPL assessment.
                   </p>
                 </div>
               )}

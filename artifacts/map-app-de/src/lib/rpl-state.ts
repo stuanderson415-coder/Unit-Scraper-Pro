@@ -9,12 +9,41 @@ export const EVIDENCE_COLOURS = [
 
 export type InterviewOutcome = 'pending' | 'resolved' | 'not-resolved';
 
+export type PreRplChecklist = {
+  interviewCompleted: boolean;
+  interviewDate: string;
+  cvResumeProvided: boolean;
+  cvResumeFileName: string;
+  academicTranscriptProvided: boolean;
+  academicTranscriptFileName: string;
+  positionDescriptionProvided: boolean;
+  positionDescriptionFileName: string;
+  sharePointRepositoryCreated: boolean;
+  sharePointPath: string;
+};
+
+export function createEmptyPreRplChecklist(): PreRplChecklist {
+  return {
+    interviewCompleted: false,
+    interviewDate: '',
+    cvResumeProvided: false,
+    cvResumeFileName: '',
+    academicTranscriptProvided: false,
+    academicTranscriptFileName: '',
+    positionDescriptionProvided: false,
+    positionDescriptionFileName: '',
+    sharePointRepositoryCreated: false,
+    sharePointPath: '',
+  };
+}
+
 export type StudentDetails = {
   name: string;
   studentNumber: string;
   trainerName: string;
   organisation: string;
   assessmentDate: string;
+  preRplChecklist: PreRplChecklist;
 };
 
 export type EvidenceItem = {
@@ -55,6 +84,7 @@ export function createEmptyRplRecord(): RplRecord {
       trainerName: '',
       organisation: '',
       assessmentDate: '',
+      preRplChecklist: createEmptyPreRplChecklist(),
     },
     evidence: [],
     mappings: {},
@@ -97,6 +127,10 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
         trainerName: parsed.student?.trainerName ?? '',
         organisation: parsed.student?.organisation ?? '',
         assessmentDate: parsed.student?.assessmentDate ?? '',
+        preRplChecklist: {
+          ...createEmptyPreRplChecklist(),
+          ...parsed.student?.preRplChecklist,
+        },
       },
       evidence: parsed.evidence ?? [],
       mappings: parsed.mappings ?? {},
@@ -191,6 +225,7 @@ export function persistRplRecord(unitCode: string, record: RplRecord, recordStud
         trainerName: record.student.trainerName,
         organisation: record.student.organisation,
         assessmentDate: record.student.assessmentDate,
+        preRplChecklist: record.student.preRplChecklist,
         updatedAt: new Date().toISOString(),
       };
       localStorage.setItem(studentIndexKey(unitCode), JSON.stringify([summary, ...current].slice(0, 20)));

@@ -40,10 +40,10 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
   };
 
   return (
-    <div className="w-64 flex flex-col h-full overflow-hidden shrink-0 hidden md:flex bg-zinc-700">
-      <div className="p-3 border-b border-zinc-600 flex items-center justify-between bg-zinc-800">
-        <div className="flex items-center gap-2 text-sm font-medium text-zinc-100">
-          <History className="w-4 h-4 text-purple-400" />
+    <div className="w-56 flex flex-col h-full overflow-hidden shrink-0 hidden md:flex bg-zinc-700">
+      <div className="p-2.5 border-b border-zinc-600 flex items-center justify-between bg-zinc-800">
+        <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-100">
+          <History className="h-3.5 w-3.5 text-white" />
           Applications in progress
         </div>
         {progress.length > 0 && (
@@ -57,7 +57,7 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
         {progress.length === 0 ? (
           <div className="p-6 text-center text-sm text-zinc-200 flex flex-col items-center gap-3 mt-10">
             <div className="w-12 h-12 rounded-full bg-zinc-600 flex items-center justify-center mb-2">
-              <ClipboardCheck className="w-6 h-6 text-zinc-300" />
+              <ClipboardCheck className="w-6 h-6 text-white" />
             </div>
             <p>No applications in progress.</p>
             <p className="text-xs text-zinc-300">Start an RPL assessment to see it here.</p>
@@ -71,7 +71,7 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
                 onClick={() => onSelect(entry.unitCode, entry.studentNumber)}
               >
                 <div className="mt-0.5">
-                  <ClipboardCheck className="w-4 h-4 text-purple-400" />
+                  <ClipboardCheck className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm text-zinc-100 truncate">
