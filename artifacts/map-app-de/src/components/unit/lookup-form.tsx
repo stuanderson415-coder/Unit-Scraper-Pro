@@ -90,14 +90,14 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
   };
 
   return (
-    <Card className="border-teal-900/20 bg-white shadow-sm">
+    <Card className="border-teal-300/60 bg-white shadow-sm">
       <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 border-b border-zinc-100 pb-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-teal-800">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-teal-700">
             <UserRound className="h-4 w-4" /> RPL intake
           </div>
-          <CardTitle className="mt-1 text-xl font-semibold tracking-tight text-zinc-900">Set up an RPL assessment</CardTitle>
-          <CardDescription className="mt-1 text-sm">Enter the key people and unit once, then move straight into evidence mapping.</CardDescription>
+          <CardTitle className="mt-1 text-xl font-semibold tracking-tight text-zinc-900">Start an RPL assessment</CardTitle>
+          <CardDescription className="mt-1 text-sm">Enter the key people and unit once, then follow the guided RPL workflow.</CardDescription>
         </div>
         <div className="hidden rounded-lg bg-teal-50 px-3 py-2 text-right text-xs leading-5 text-teal-900 sm:block">
           <span className="block font-semibold">Recognition of Prior Learning</span>
@@ -135,9 +135,9 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
             <Input placeholder="e.g. CHCCCS007" value={code} onChange={event => setCode(event.target.value.toUpperCase())} className="font-mono" disabled={loading} />
           </label>
           <div className="flex items-end lg:col-span-1">
-            <Button type="submit" disabled={!code.trim() || !hasRequiredIntake || loading} className="w-full bg-teal-800 hover:bg-teal-700">
+            <Button type="submit" disabled={!code.trim() || !hasRequiredIntake || loading} className="w-full bg-teal-600 hover:bg-teal-700">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Start RPL
+              Start RPL assessment
             </Button>
           </div>
         </form>

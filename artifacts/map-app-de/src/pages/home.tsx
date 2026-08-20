@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Map as MapIcon } from 'lucide-react';
+import { ClipboardCheck, FileCheck2 } from 'lucide-react';
 import { useLookupUnit, type UnitOfCompetency } from '@workspace/api-client-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +18,58 @@ function loadNum(): number {
 }
 function loadTitle(): string {
   try { return localStorage.getItem(TITLE_KEY) ?? ''; } catch { return ''; }
+}
+
+function WelcomePanel() {
+  const steps = [
+    'Confirm the student details and RPL application context.',
+    'Build the learner’s certified evidence log.',
+    'Map each evidence item to the unit requirements.',
+    'Record gaps and complete interview questions or assessments.',
+    'Review the coverage and make the final assessment decision.',
+    'Generate the completed RPL assessor report.',
+  ];
+
+  return (
+    <section className="rounded-2xl border border-teal-200 bg-white p-6 shadow-sm md:p-7">
+      <div className="flex items-start gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
+          <ClipboardCheck className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-700">Welcome</p>
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">Welcome to RPL Companion</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
+            This tool will assist you to organise and map a student’s evidence submitted toward an RPL application.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+        <div>
+          <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-zinc-700">Follow these steps</h3>
+          <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+            {steps.map((step, index) => (
+              <li key={step} className="flex gap-3 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 text-sm leading-5 text-zinc-700">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">{index + 1}</span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <aside className="rounded-xl border border-teal-100 bg-teal-50/80 p-4">
+          <FileCheck2 className="h-6 w-6 text-teal-700" />
+          <h3 className="mt-3 font-semibold text-teal-950">Your final report</h3>
+          <p className="mt-2 text-sm leading-6 text-teal-900">
+            At the conclusion of the process, you can generate an RPL assessor report combining the learner’s certified evidence log, gap assessments and interview records, final mapping, and assessment decision.
+          </p>
+          <p className="mt-2 text-xs font-medium leading-5 text-teal-800">
+            Lodge this report with the student’s RPL application form.
+          </p>
+        </aside>
+      </div>
+    </section>
+  );
 }
 
 export default function Home() {
@@ -101,10 +153,10 @@ export default function Home() {
             <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 pb-24">
 
               {!currentUnit && (
-                <LookupForm
-                  onUnitLoaded={handleUnitLoaded}
-                  isPending={lookupUnit.isPending}
-                />
+                <>
+                  <WelcomePanel />
+                  <LookupForm onUnitLoaded={handleUnitLoaded} isPending={lookupUnit.isPending} />
+                </>
               )}
 
               {lookupUnit.isPending ? (
@@ -133,17 +185,7 @@ export default function Home() {
                       <UnitDisplay unit={currentUnit} numTasks={numTasks} docTitle={docTitle} />
                     </div>}
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-center py-24 px-4 mt-8 bg-white border border-zinc-300 border-dashed rounded-xl shadow-sm">
-                  <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-zinc-200">
-                    <MapIcon className="w-8 h-8 text-zinc-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-zinc-800 mb-2 tracking-tight">Start an RPL assessment</h3>
-                  <p className="text-zinc-500 max-w-md leading-relaxed text-sm">
-                    Enter a unit code above to fetch the unit from training.gov.au and begin the RPL assessment.
-                  </p>
-                </div>
-              )}
+              ) : null}
             </div>
           </ScrollArea>
         </main>
