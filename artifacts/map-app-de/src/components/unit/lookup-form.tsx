@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { Loader2 } from 'lucide-react';
-import { useLookupUnit, useUploadUnit, getGetUnitHistoryQueryKey, type UnitOfCompetency } from '@workspace/api-client-react';
+import { CalendarDays, Loader2, UserRound } from 'lucide-react';
+import { useLookupUnit, useUploadUnit, type UnitOfCompetency } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import type { StudentDetails } from '@/lib/rpl-state';
 
 interface Props {
-  onUnitLoaded: (unit: UnitOfCompetency) => void;
+  onUnitLoaded: (unit: UnitOfCompetency, intake: StudentDetails) => void;
   isPending: boolean;
   numTasks: number;
   setNumTasks: (n: number) => void;
@@ -16,112 +16,132 @@ interface Props {
   setDocTitle: (s: string) => void;
 }
 
+const today = () => new Date().toISOString().slice(0, 10);
+
 export function LookupForm({ onUnitLoaded, isPending, numTasks, setNumTasks, docTitle, setDocTitle }: Props) {
   const [code, setCode] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [intake, setIntake] = useState<StudentDetails>({
+    name: '',
+    studentNumber: '',
+    trainerName: '',
+    organisation: '',
+    assessmentDate: today(),
+  });
 
-  const lookupUnit  = useLookupUnit();
-  const uploadUnit  = useUploadUnit();
-  const queryClient = useQueryClient();
-  const { toast }   = useToast();
-
+  const lookupUnit = useLookupUnit();
+  const uploadUnit = useUploadUnit();
+  const { toast } = useToast();
   const loading = lookupUnit.isPending || uploadUnit.isPending || isPending;
+  const hasRequiredIntake = Boolean(intake.name.trim() && intake.studentNumber.trim());
+  const updateIntake = (patch: Partial<StudentDetails>) => setIntake(current => ({ ...current, ...patch }));
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: getGetUnitHistoryQueryKey() });
-
-  const handleCodeSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!code.trim()) return;
-    lookupUnit.mutate({ data: { unitCode: code.trim() } }, {
-      onSuccess: (data) => { onUnitLoaded(data); invalidate(); setCode(''); },
-      onError:   () => toast({ title: 'Lookup failed', description: 'Could not find unit or training.gov.au is unavailable.', variant: 'destructive' }),
-    });
+  const loadUnit = (unit: UnitOfCompetency) => {
+    onUnitLoaded(unit, intake);
+    setCode('');
   };
 
-  const handleFileUpload = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file) return;
-    const fd = new FormData();
-    fd.append('file', file);
-    // @ts-expect-error: pass FormData directly
-    uploadUnit.mutate(fd, {
-      onSuccess: (data) => { onUnitLoaded(data); invalidate(); setFile(null); },
-      onError:   () => toast({ title: 'Upload failed', description: 'Could not parse the PDF.', variant: 'destructive' }),
+  const handleCodeSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!code.trim() || !hasRequiredIntake) return;
+    lookupUnit.mutate(
+      { data: { unitCode: code.trim() } },
+      {
+        onSuccess: loadUnit,
+        onError: () => toast({
+          title: 'Lookup failed',
+          description: 'Could not find the unit or training.gov.au is unavailable.',
+          variant: 'destructive',
+        }),
+      },
+    );
+  };
+
+  const handleFileUpload = () => {
+    if (!file || !hasRequiredIntake) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    // @ts-expect-error: generated client accepts FormData at runtime.
+    uploadUnit.mutate(formData, {
+      onSuccess: unit => {
+        loadUnit(unit);
+        setFile(null);
+      },
+      onError: () => toast({
+        title: 'Upload failed',
+        description: 'Could not parse the PDF.',
+        variant: 'destructive',
+      }),
     });
   };
 
   return (
-    <Card className="border-zinc-300 shadow-sm bg-zinc-100">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg text-zinc-900 font-semibold tracking-tight">Map a Unit of Competency</CardTitle>
-        <CardDescription className="text-zinc-500 text-sm">Fetch from training.gov.au or upload a PDF.</CardDescription>
+    <Card className="border-teal-900/20 bg-white shadow-sm">
+      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 border-b border-zinc-100 pb-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-teal-800">
+            <UserRound className="h-4 w-4" /> RPL intake
+          </div>
+          <CardTitle className="mt-1 text-xl font-semibold tracking-tight text-zinc-900">Set up an RPL assessment</CardTitle>
+          <CardDescription className="mt-1 text-sm">Enter the key people and unit once, then move straight into evidence mapping.</CardDescription>
+        </div>
+        <div className="hidden rounded-lg bg-teal-50 px-3 py-2 text-right text-xs leading-5 text-teal-900 sm:block">
+          <span className="block font-semibold">Recognition of Prior Learning</span>
+          <span>Australian VET workflow</span>
+        </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
-
-        {/* ── Row 1: Code · Assessments · Lookup ── */}
-        <form onSubmit={handleCodeSubmit} className="flex items-center gap-2">
-          {/* Unit code — intentionally short */}
-          <Input
-            placeholder="Unit code"
-            value={code}
-            onChange={e => setCode(e.target.value.toUpperCase())}
-            className="w-36 font-mono text-sm bg-white border-zinc-300 focus-visible:ring-zinc-400/40 focus-visible:border-zinc-500 placeholder:text-zinc-400"
-            disabled={loading}
-          />
-
-          {/* Number of assessments */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <label className="text-xs text-zinc-500 whitespace-nowrap">Assessments</label>
-            <Input
-              type="number"
-              min={1}
-              max={12}
-              value={numTasks}
-              onChange={e => setNumTasks(Math.min(12, Math.max(1, Number(e.target.value))))}
-              className="w-16 text-sm text-center bg-white border-zinc-300 focus-visible:ring-zinc-400/40"
-              disabled={loading}
-            />
+      <CardContent className="pt-5">
+        <form onSubmit={handleCodeSubmit} className="grid gap-4 lg:grid-cols-6">
+          <label className="grid gap-1.5 lg:col-span-2">
+            <span className="text-xs font-semibold text-zinc-700">Student name <span className="text-rose-600">*</span></span>
+            <Input placeholder="e.g. Alex Morgan" value={intake.name} onChange={event => updateIntake({ name: event.target.value })} disabled={loading} />
+          </label>
+          <label className="grid gap-1.5 lg:col-span-1">
+            <span className="text-xs font-semibold text-zinc-700">Student number <span className="text-rose-600">*</span></span>
+            <Input placeholder="e.g. 12345678" value={intake.studentNumber} onChange={event => updateIntake({ studentNumber: event.target.value })} disabled={loading} />
+          </label>
+          <label className="grid gap-1.5 lg:col-span-2">
+            <span className="text-xs font-semibold text-zinc-700">Trainer / assessor</span>
+            <Input placeholder="e.g. Jordan Lee" value={intake.trainerName} onChange={event => updateIntake({ trainerName: event.target.value })} disabled={loading} />
+          </label>
+          <label className="grid gap-1.5 lg:col-span-1">
+            <span className="text-xs font-semibold text-zinc-700">Assessment date</span>
+            <div className="relative">
+              <CalendarDays className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+              <Input type="date" value={intake.assessmentDate} onChange={event => updateIntake({ assessmentDate: event.target.value })} className="pl-9" disabled={loading} />
+            </div>
+          </label>
+          <label className="grid gap-1.5 lg:col-span-3">
+            <span className="text-xs font-semibold text-zinc-700">Organisation / RTO</span>
+            <Input placeholder="e.g. Your RTO or workplace" value={intake.organisation} onChange={event => updateIntake({ organisation: event.target.value })} disabled={loading} />
+          </label>
+          <label className="grid gap-1.5 lg:col-span-2">
+            <span className="text-xs font-semibold text-zinc-700">Unit seeking RPL for <span className="text-rose-600">*</span></span>
+            <Input placeholder="e.g. CHCCCS007" value={code} onChange={event => setCode(event.target.value.toUpperCase())} className="font-mono" disabled={loading} />
+          </label>
+          <div className="flex items-end lg:col-span-1">
+            <Button type="submit" disabled={!code.trim() || !hasRequiredIntake || loading} className="w-full bg-teal-800 hover:bg-teal-700">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Start RPL
+            </Button>
           </div>
-
-          <Button
-            type="submit"
-            disabled={!code.trim() || loading}
-            className="bg-zinc-900 hover:bg-zinc-700 text-white shrink-0 shadow-sm"
-          >
-            {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            Lookup Unit
-          </Button>
         </form>
 
-        {/* ── Row 2: Custom document title ── */}
-        <Input
-          placeholder="Document title / custom label (used in Word export)"
-          value={docTitle}
-          onChange={e => setDocTitle(e.target.value)}
-          className="w-full text-sm bg-white border-zinc-300 focus-visible:ring-zinc-400/40 placeholder:text-zinc-400"
-        />
-
-        {/* ── Row 3: PDF upload (secondary) ── */}
-        <form onSubmit={handleFileUpload} className="flex items-center gap-2 pt-1 border-t border-zinc-200">
-          <span className="text-xs text-zinc-400 shrink-0">or PDF:</span>
-          <Input
-            type="file"
-            accept=".pdf"
-            onChange={e => setFile(e.target.files?.[0] || null)}
-            className="flex-1 file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-zinc-200 file:text-zinc-700 hover:file:bg-zinc-300 cursor-pointer h-9 bg-white border-zinc-300 text-sm text-zinc-600 focus-visible:ring-zinc-400/40"
-            disabled={loading}
-          />
-          <Button
-            type="submit"
-            disabled={!file || loading}
-            className="bg-zinc-900 hover:bg-zinc-700 text-white shrink-0 shadow-sm"
-          >
-            {loading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-            Extract
-          </Button>
-        </form>
-
+        <details className="mt-5 border-t border-zinc-100 pt-3">
+          <summary className="cursor-pointer text-xs font-medium text-zinc-500 hover:text-zinc-800">Other options: upload a unit PDF or open assessment-mapping settings</summary>
+          <div className="mt-3 grid gap-3 rounded-lg bg-zinc-50 p-3 lg:grid-cols-[1fr_auto_auto]">
+            <Input type="file" accept=".pdf" onChange={event => setFile(event.target.files?.[0] || null)} disabled={loading} className="h-9 bg-white text-sm" />
+            <Button type="button" onClick={handleFileUpload} disabled={!file || !hasRequiredIntake || loading} variant="outline">
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Extract unit
+            </Button>
+            <div className="flex items-center gap-2 text-xs text-zinc-600">
+              <span>Assessment tasks</span>
+              <Input type="number" min={1} max={12} value={numTasks} onChange={event => setNumTasks(Math.min(12, Math.max(1, Number(event.target.value))))} className="h-9 w-14 bg-white text-center" />
+            </div>
+            <Input placeholder="Custom title for assessment-mapping export" value={docTitle} onChange={event => setDocTitle(event.target.value)} className="h-9 bg-white text-sm lg:col-span-3" />
+          </div>
+        </details>
       </CardContent>
     </Card>
   );

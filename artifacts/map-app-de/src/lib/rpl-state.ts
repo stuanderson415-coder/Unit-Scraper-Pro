@@ -12,6 +12,9 @@ export type InterviewOutcome = 'pending' | 'resolved' | 'not-resolved';
 export type StudentDetails = {
   name: string;
   studentNumber: string;
+  trainerName: string;
+  organisation: string;
+  assessmentDate: string;
 };
 
 export type EvidenceItem = {
@@ -40,9 +43,19 @@ export type StudentRecordSummary = StudentDetails & {
   updatedAt: string;
 };
 
+export type RplProgressItem = StudentRecordSummary & {
+  unitCode: string;
+};
+
 export function createEmptyRplRecord(): RplRecord {
   return {
-    student: { name: '', studentNumber: '' },
+    student: {
+      name: '',
+      studentNumber: '',
+      trainerName: '',
+      organisation: '',
+      assessmentDate: '',
+    },
     evidence: [],
     mappings: {},
     interviews: {},
@@ -53,6 +66,13 @@ const lastStudentKey = (unitCode: string) => `map-app-de:rpl:last-student:${unit
 const studentIndexKey = (unitCode: string) => `map-app-de:rpl:students:${unitCode}`;
 const recordKey = (unitCode: string, studentNumber: string) =>
   `map-app-de:rpl:${unitCode}:${studentNumber.trim() || 'draft'}`;
+export const RPL_PROGRESS_EVENT = 'map-app-de:rpl-progress';
+
+function notifyProgressChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(RPL_PROGRESS_EVENT));
+  }
+}
 
 export function loadRplRecord(unitCode: string): RplRecord {
   try {
@@ -71,7 +91,13 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
     return {
       ...createEmptyRplRecord(),
       ...parsed,
-      student: { name: parsed.student?.name ?? '', studentNumber: parsed.student?.studentNumber ?? '' },
+      student: {
+        name: parsed.student?.name ?? '',
+        studentNumber: parsed.student?.studentNumber ?? '',
+        trainerName: parsed.student?.trainerName ?? '',
+        organisation: parsed.student?.organisation ?? '',
+        assessmentDate: parsed.student?.assessmentDate ?? '',
+      },
       evidence: parsed.evidence ?? [],
       mappings: parsed.mappings ?? {},
       interviews: parsed.interviews ?? {},
@@ -98,6 +124,60 @@ export function listRplStudents(unitCode: string): StudentRecordSummary[] {
   }
 }
 
+export function listRplProgress(): RplProgressItem[] {
+  try {
+    const prefix = 'map-app-de:rpl:students:';
+    const progress: RplProgressItem[] = [];
+    const seen = new Set<string>();
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!key?.startsWith(prefix)) continue;
+      const unitCode = key.slice(prefix.length);
+      const students = listRplStudents(unitCode);
+      for (const student of students) {
+        const identity = `${unitCode}:${student.studentNumber}`;
+        if (seen.has(identity)) continue;
+        seen.add(identity);
+        progress.push({ ...student, unitCode });
+      }
+    }
+    return progress.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  } catch {
+    return [];
+  }
+}
+
+export function removeRplProgress(unitCode: string, studentNumber: string) {
+  try {
+    localStorage.removeItem(recordKey(unitCode, studentNumber));
+    const remaining = listRplStudents(unitCode).filter(item => item.studentNumber !== studentNumber);
+    if (remaining.length) {
+      localStorage.setItem(studentIndexKey(unitCode), JSON.stringify(remaining));
+      localStorage.setItem(lastStudentKey(unitCode), remaining[0].studentNumber);
+    } else {
+      localStorage.removeItem(studentIndexKey(unitCode));
+      localStorage.removeItem(lastStudentKey(unitCode));
+    }
+    notifyProgressChanged();
+  } catch {
+    // RPL work remains usable even if local storage is unavailable.
+  }
+}
+
+export function clearRplProgress() {
+  try {
+    const keysToRemove: string[] = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith('map-app-de:rpl:')) keysToRemove.push(key);
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    notifyProgressChanged();
+  } catch {
+    // RPL work remains usable even if local storage is unavailable.
+  }
+}
+
 export function persistRplRecord(unitCode: string, record: RplRecord, recordStudentNumber?: string) {
   try {
     const studentNumber = (recordStudentNumber ?? record.student.studentNumber).trim();
@@ -108,10 +188,14 @@ export function persistRplRecord(unitCode: string, record: RplRecord, recordStud
       const summary: StudentRecordSummary = {
         name: record.student.name,
         studentNumber,
+        trainerName: record.student.trainerName,
+        organisation: record.student.organisation,
+        assessmentDate: record.student.assessmentDate,
         updatedAt: new Date().toISOString(),
       };
       localStorage.setItem(studentIndexKey(unitCode), JSON.stringify([summary, ...current].slice(0, 20)));
     }
+    notifyProgressChanged();
   } catch {
     // RPL work remains usable even if local storage is unavailable.
   }

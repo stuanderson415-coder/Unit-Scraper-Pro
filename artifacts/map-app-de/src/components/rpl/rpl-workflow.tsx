@@ -20,6 +20,7 @@ import { buildRows } from '@/lib/unit-rows';
 import { exportRplToWord } from '@/lib/export-rpl-doc';
 import {
   EVIDENCE_COLOURS,
+  createEmptyRplRecord,
   evidenceCode,
   hasRplRecord,
   listRplStudents,
@@ -32,6 +33,7 @@ import {
   type InterviewRecord,
   type RplRecord,
   type StudentRecordSummary,
+  type StudentDetails,
 } from '@/lib/rpl-state';
 
 type Stage = 'student' | 'evidence' | 'mapping' | 'gaps' | 'review' | 'final';
@@ -124,9 +126,19 @@ function FieldLabel({ children }: { children: string }) {
   return <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.11em] text-zinc-600">{children}</label>;
 }
 
-export function RplWorkflow({ unit }: { unit: UnitOfCompetency }) {
-  const [record, setRecord] = useState<RplRecord>(() => loadRplRecord(unit.code));
-  const [activeRecordStudentNumber, setActiveRecordStudentNumber] = useState(() => loadRplRecord(unit.code).student.studentNumber.trim() || 'draft');
+export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapping }: { unit: UnitOfCompetency; studentNumber?: string; prefill?: StudentDetails; onOpenAssessmentMapping?: () => void }) {
+  const hasPrefill = Boolean(prefill?.name || prefill?.studentNumber);
+  const [record, setRecord] = useState<RplRecord>(() => {
+    const loaded = studentNumber
+      ? loadRplRecordForStudent(unit.code, studentNumber)
+      : hasPrefill
+        ? createEmptyRplRecord()
+        : loadRplRecord(unit.code);
+    return prefill ? { ...loaded, student: { ...loaded.student, ...prefill } } : loaded;
+  });
+  const [activeRecordStudentNumber, setActiveRecordStudentNumber] = useState(
+    () => studentNumber ?? (hasPrefill ? 'draft' : (loadRplRecord(unit.code).student.studentNumber.trim() || 'draft')),
+  );
   const [savedStudents, setSavedStudents] = useState<StudentRecordSummary[]>(() => listRplStudents(unit.code));
   const [recordConflict, setRecordConflict] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>('student');
@@ -261,12 +273,7 @@ export function RplWorkflow({ unit }: { unit: UnitOfCompetency }) {
   };
 
   const startNewStudent = () => {
-    setRecord({
-      student: { name: '', studentNumber: '' },
-      evidence: [],
-      mappings: {},
-      interviews: {},
-    });
+    setRecord(createEmptyRplRecord());
     setActiveRecordStudentNumber('draft');
     setSelectedEvidenceId(null);
     setRecordConflict(null);
@@ -292,7 +299,7 @@ export function RplWorkflow({ unit }: { unit: UnitOfCompetency }) {
             <button type="button" onClick={startNewStudent} className="rounded-full border border-dashed border-zinc-400 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:border-teal-500 hover:text-teal-800">New record</button>
           </div>
         )}
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <FieldLabel>Student name</FieldLabel>
             <input
@@ -308,6 +315,33 @@ export function RplWorkflow({ unit }: { unit: UnitOfCompetency }) {
               value={record.student.studentNumber}
               onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, studentNumber: event.target.value } }))}
               placeholder="e.g. 12345678"
+              className="h-11 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            />
+          </div>
+          <div>
+            <FieldLabel>Trainer / assessor</FieldLabel>
+            <input
+              value={record.student.trainerName}
+              onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, trainerName: event.target.value } }))}
+              placeholder="e.g. Jordan Lee"
+              className="h-11 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            />
+          </div>
+          <div>
+            <FieldLabel>Organisation / RTO</FieldLabel>
+            <input
+              value={record.student.organisation}
+              onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, organisation: event.target.value } }))}
+              placeholder="e.g. Your RTO"
+              className="h-11 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            />
+          </div>
+          <div>
+            <FieldLabel>Assessment date</FieldLabel>
+            <input
+              type="date"
+              value={record.student.assessmentDate}
+              onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, assessmentDate: event.target.value } }))}
               className="h-11 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
             />
           </div>
@@ -611,6 +645,8 @@ export function RplWorkflow({ unit }: { unit: UnitOfCompetency }) {
           <div className="grid gap-2 sm:grid-cols-2">
             <span><strong>Student:</strong> {record.student.name || 'Not recorded'}</span>
             <span><strong>Student number:</strong> {record.student.studentNumber || 'Not recorded'}</span>
+            <span><strong>Trainer / assessor:</strong> {record.student.trainerName || 'Not recorded'}</span>
+            <span><strong>Assessment date:</strong> {record.student.assessmentDate || 'Not recorded'}</span>
             <span><strong>Evidence items:</strong> {record.evidence.length}</span>
             <span><strong>Direct mappings:</strong> {coveredRows} of {requirementRows.length}</span>
           </div>
@@ -652,9 +688,16 @@ export function RplWorkflow({ unit }: { unit: UnitOfCompetency }) {
           </div>
           <h1 className="mt-1 text-lg font-bold text-zinc-900">{unit.title}</h1>
         </div>
-        <div className="text-right text-xs leading-5 text-zinc-500">
-          <span className="block font-semibold text-zinc-700">{record.student.name || 'No student selected'}</span>
-          <span>{record.student.studentNumber || 'Student number required'}</span>
+        <div className="flex items-center gap-4 text-right text-xs leading-5 text-zinc-500">
+          <div>
+            <span className="block font-semibold text-zinc-700">{record.student.name || 'No student selected'}</span>
+            <span>{record.student.studentNumber || 'Student number required'}</span>
+          </div>
+          {onOpenAssessmentMapping && (
+            <button type="button" onClick={onOpenAssessmentMapping} className="rounded-md border border-zinc-300 px-2.5 py-1.5 text-xs font-semibold text-zinc-600 transition hover:border-zinc-500 hover:text-zinc-900">
+              Assessment mapping
+            </button>
+          )}
         </div>
       </header>
 
