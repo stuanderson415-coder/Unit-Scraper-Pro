@@ -31,39 +31,39 @@ function WelcomePanel() {
   ];
 
   return (
-    <section className="rounded-2xl border border-teal-200 bg-white p-6 shadow-sm md:p-7">
-      <div className="flex items-start gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700">
-          <ClipboardCheck className="h-6 w-6" />
+    <section className="rounded-2xl border border-teal-200 bg-white p-5 shadow-sm md:p-6">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
+          <ClipboardCheck className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-700">Welcome</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">Welcome to RPL Companion</h2>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-600">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-teal-700">Welcome</p>
+          <h2 className="mt-0.5 text-xl font-bold tracking-tight text-zinc-900">Welcome to RPL Companion</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-zinc-600">
             This tool will assist you to organise and map a student’s evidence submitted toward an RPL application.
           </p>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-zinc-700">Follow these steps</h3>
-          <ol className="mt-3 grid gap-2 sm:grid-cols-2">
+          <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-zinc-700">Follow these steps</h3>
+          <ol className="mt-2 grid gap-1.5 sm:grid-cols-2">
             {steps.map((step, index) => (
-              <li key={step} className="flex gap-3 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 text-sm leading-5 text-zinc-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">{index + 1}</span>
+              <li key={step} className="flex gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2 text-xs leading-4 text-zinc-700">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-600 text-[11px] font-bold text-white">{index + 1}</span>
                 <span>{step}</span>
               </li>
             ))}
           </ol>
         </div>
-        <aside className="rounded-xl border border-teal-100 bg-teal-50/80 p-4">
-          <FileCheck2 className="h-6 w-6 text-teal-700" />
-          <h3 className="mt-3 font-semibold text-teal-950">Your final report</h3>
-          <p className="mt-2 text-sm leading-6 text-teal-900">
+        <aside className="rounded-xl border border-teal-100 bg-teal-50/80 p-3">
+          <FileCheck2 className="h-5 w-5 text-teal-700" />
+          <h3 className="mt-2 text-sm font-semibold text-teal-950">Your final report</h3>
+          <p className="mt-1 text-xs leading-5 text-teal-900">
             At the conclusion of the process, you can generate an RPL assessor report combining the learner’s certified evidence log, gap assessments and interview records, final mapping, and assessment decision.
           </p>
-          <p className="mt-2 text-xs font-medium leading-5 text-teal-800">
+          <p className="mt-1 text-[11px] font-medium leading-4 text-teal-800">
             Lodge this report with the student’s RPL application form.
           </p>
         </aside>
