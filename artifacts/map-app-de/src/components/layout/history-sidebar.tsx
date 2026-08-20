@@ -40,34 +40,34 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
   };
 
   return (
-    <div className="w-80 flex flex-col h-full overflow-hidden shrink-0 hidden md:flex bg-zinc-800">
-      <div className="p-4 border-b border-zinc-700 flex items-center justify-between bg-zinc-900">
-        <div className="flex items-center gap-2 font-medium text-zinc-100">
+    <div className="w-64 flex flex-col h-full overflow-hidden shrink-0 hidden md:flex bg-zinc-700">
+      <div className="p-3 border-b border-zinc-600 flex items-center justify-between bg-zinc-800">
+        <div className="flex items-center gap-2 text-sm font-medium text-zinc-100">
           <History className="w-4 h-4 text-purple-400" />
-          RPL in progress
+          Applications in progress
         </div>
         {progress.length > 0 && (
           <Button variant="ghost" size="icon" onClick={handleClear} title="Clear history"
-            className="h-8 w-8 text-zinc-400 hover:text-red-400 hover:bg-zinc-700">
+            className="h-8 w-8 text-zinc-300 hover:text-red-400 hover:bg-zinc-700">
             <Trash2 className="w-4 h-4" />
           </Button>
         )}
       </div>
       <ScrollArea className="flex-1">
         {progress.length === 0 ? (
-          <div className="p-8 text-center text-sm text-zinc-400 flex flex-col items-center gap-3 mt-10">
-            <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center mb-2">
-              <ClipboardCheck className="w-6 h-6 text-zinc-500" />
+          <div className="p-6 text-center text-sm text-zinc-200 flex flex-col items-center gap-3 mt-10">
+            <div className="w-12 h-12 rounded-full bg-zinc-600 flex items-center justify-center mb-2">
+              <ClipboardCheck className="w-6 h-6 text-zinc-300" />
             </div>
-            <p>No RPL assessments in progress.</p>
-            <p className="text-xs text-zinc-500">Start an RPL assessment to see it here.</p>
+            <p>No applications in progress.</p>
+            <p className="text-xs text-zinc-300">Start an RPL assessment to see it here.</p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-700">
+          <div className="divide-y divide-zinc-600">
             {progress.map(entry => (
               <div
                 key={`${entry.unitCode}-${entry.studentNumber}`}
-                className="p-4 hover:bg-purple-600/20 cursor-pointer group transition-colors flex gap-3 items-start border-l-2 border-transparent hover:border-purple-500"
+                className="p-3 hover:bg-purple-600/20 cursor-pointer group transition-colors flex gap-3 items-start border-l-2 border-transparent hover:border-purple-500"
                 onClick={() => onSelect(entry.unitCode, entry.studentNumber)}
               >
                 <div className="mt-0.5">
