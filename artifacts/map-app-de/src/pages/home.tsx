@@ -61,84 +61,97 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-zinc-300 overflow-hidden font-sans">
-      <HistorySidebar onSelect={handleHistorySelect} />
-
-      <main className="flex-1 flex flex-col h-full relative">
-        <ScrollArea className="flex-1 h-full">
-          <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 pb-24">
-
-            <header className="hidden items-center justify-between gap-4 md:flex">
-              <div className="flex items-baseline gap-3">
-                <h1 className="text-2xl font-bold tracking-tight text-zinc-900">RPL Companion</h1>
-                <p className="text-sm text-zinc-600">Recognition of Prior Learning workspace</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" rel="noopener noreferrer">
-                  <img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg" alt="License: GPL v3" className="h-5" />
-                </a>
-                <a href="https://github.com/stuanderson415-coder/map-app" target="_blank" rel="noopener noreferrer">
-                  <img src="https://img.shields.io/badge/Source-GitHub-181717?logo=github" alt="Source on GitHub" className="h-5" />
-                </a>
-                {currentUnit && (
-                  <button type="button" onClick={startAnotherRpl} className="ml-2 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition hover:border-teal-700 hover:text-teal-800">
-                    Start another RPL
-                  </button>
-                )}
-              </div>
-            </header>
-
-            {!currentUnit && (
-              <LookupForm
-                onUnitLoaded={handleUnitLoaded}
-                isPending={lookupUnit.isPending}
-                numTasks={numTasks}
-                setNumTasks={setNumTasks}
-                docTitle={docTitle}
-                setDocTitle={setDocTitle}
-              />
-            )}
-
-            {lookupUnit.isPending ? (
-              <div className="space-y-6 mt-10">
-                <div className="flex gap-4 mb-8">
-                  <Skeleton className="h-16 w-48 rounded-lg" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-6 w-32" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
-                </div>
-                <Skeleton className="h-[500px] w-full rounded-xl" />
-              </div>
-            ) : currentUnit ? (
-              <div className="mt-10">
-                {workspaceMode === 'rpl'
-                  ? <RplWorkflow key={`${currentUnit.code}:${selectedRplStudent ?? intakeDetails?.studentNumber ?? 'last'}`} unit={currentUnit} studentNumber={selectedRplStudent} prefill={intakeDetails} onOpenAssessmentMapping={() => setWorkspaceMode('assessment')} />
-                  : <div className="space-y-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
-                      <div>
-                        <p className="font-mono text-xs font-bold text-zinc-500">{currentUnit.code}</p>
-                        <p className="mt-0.5 text-sm font-semibold text-zinc-900">{currentUnit.title}</p>
-                      </div>
-                      <button type="button" onClick={() => setWorkspaceMode('rpl')} className="rounded-md border border-teal-700 px-3 py-1.5 text-xs font-semibold text-teal-800 transition hover:bg-teal-50">Return to RPL workflow</button>
-                    </div>
-                    <UnitDisplay unit={currentUnit} numTasks={numTasks} docTitle={docTitle} />
-                  </div>}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center text-center py-24 px-4 mt-8 bg-white border border-zinc-300 border-dashed rounded-xl shadow-sm">
-                <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-zinc-200">
-                  <MapIcon className="w-8 h-8 text-zinc-400" />
-                </div>
-                 <h3 className="text-xl font-semibold text-zinc-800 mb-2 tracking-tight">Start an RPL assessment</h3>
-                <p className="text-zinc-500 max-w-md leading-relaxed text-sm">
-                   Enter a unit code above to fetch a unit from training.gov.au, or upload a PDF document.
-                </p>
-              </div>
+    <>
+      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-[#26364d] bg-[#122238] text-white shadow-md">
+        <div className="flex h-full w-full items-center justify-between gap-4 px-4 md:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <img
+              src="/rpl-companion-logo.png"
+              alt="RPL Companion logo"
+              className="h-10 w-[65px] shrink-0 rounded-sm bg-white p-1 object-contain"
+            />
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold tracking-tight sm:text-xl">RPL Companion</h1>
+              <p className="hidden truncate text-xs text-slate-300 sm:block">Recognition of Prior Learning workspace</p>
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden items-center gap-2 md:flex">
+              <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" rel="noopener noreferrer">
+                <img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg" alt="License: GPL v3" className="h-5" />
+              </a>
+              <a href="https://github.com/stuanderson415-coder/map-app" target="_blank" rel="noopener noreferrer">
+                <img src="https://img.shields.io/badge/Source-GitHub-181717?logo=github" alt="Source on GitHub" className="h-5" />
+              </a>
+            </div>
+            {currentUnit && (
+              <button type="button" onClick={startAnotherRpl} className="rounded-md border border-slate-400/60 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 shadow-sm transition hover:bg-slate-100">
+                Start another RPL
+              </button>
             )}
           </div>
-        </ScrollArea>
-      </main>
-    </div>
+        </div>
+      </header>
+
+      <div className="mt-16 flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-300 font-sans">
+        <HistorySidebar onSelect={handleHistorySelect} />
+
+        <main className="flex-1 flex flex-col h-full relative">
+          <ScrollArea className="flex-1 h-full">
+            <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 pb-24">
+
+              {!currentUnit && (
+                <LookupForm
+                  onUnitLoaded={handleUnitLoaded}
+                  isPending={lookupUnit.isPending}
+                  numTasks={numTasks}
+                  setNumTasks={setNumTasks}
+                  docTitle={docTitle}
+                  setDocTitle={setDocTitle}
+                />
+              )}
+
+              {lookupUnit.isPending ? (
+                <div className="space-y-6 mt-10">
+                  <div className="flex gap-4 mb-8">
+                    <Skeleton className="h-16 w-48 rounded-lg" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-[500px] w-full rounded-xl" />
+                </div>
+              ) : currentUnit ? (
+                <div className="mt-10">
+                  {workspaceMode === 'rpl'
+                    ? <RplWorkflow key={`${currentUnit.code}:${selectedRplStudent ?? intakeDetails?.studentNumber ?? 'last'}`} unit={currentUnit} studentNumber={selectedRplStudent} prefill={intakeDetails} onOpenAssessmentMapping={() => setWorkspaceMode('assessment')} />
+                    : <div className="space-y-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
+                        <div>
+                          <p className="font-mono text-xs font-bold text-zinc-500">{currentUnit.code}</p>
+                          <p className="mt-0.5 text-sm font-semibold text-zinc-900">{currentUnit.title}</p>
+                        </div>
+                        <button type="button" onClick={() => setWorkspaceMode('rpl')} className="rounded-md border border-teal-700 px-3 py-1.5 text-xs font-semibold text-teal-800 transition hover:bg-teal-50">Return to RPL workflow</button>
+                      </div>
+                      <UnitDisplay unit={currentUnit} numTasks={numTasks} docTitle={docTitle} />
+                    </div>}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center py-24 px-4 mt-8 bg-white border border-zinc-300 border-dashed rounded-xl shadow-sm">
+                  <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mb-6 shadow-sm border border-zinc-200">
+                    <MapIcon className="w-8 h-8 text-zinc-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-zinc-800 mb-2 tracking-tight">Start an RPL assessment</h3>
+                  <p className="text-zinc-500 max-w-md leading-relaxed text-sm">
+                    Enter a unit code above to fetch a unit from training.gov.au, or upload a PDF document.
+                  </p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </main>
+      </div>
+    </>
   );
 }
