@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { HistorySidebar } from '@/components/layout/history-sidebar';
 import { LookupForm } from '@/components/unit/lookup-form';
+import { RplWorkflow } from '@/components/rpl/rpl-workflow';
 import { UnitDisplay } from '@/components/unit/unit-display';
 
 const NUM_KEY    = 'map-app-de:numtasks:global';
@@ -22,6 +23,7 @@ export default function Home() {
   const [currentUnit, setCurrentUnit] = useState<UnitOfCompetency | null>(null);
   const [numTasks,    setNumTasksRaw]  = useState<number>(loadNum);
   const [docTitle,    setDocTitleRaw]  = useState<string>(loadTitle);
+  const [workspaceMode, setWorkspaceMode] = useState<'rpl' | 'assessment'>('rpl');
 
   const setNumTasks = (n: number) => {
     setNumTasksRaw(n);
@@ -35,9 +37,14 @@ export default function Home() {
   const lookupUnit = useLookupUnit();
   const { toast } = useToast();
 
+  const handleUnitLoaded = (unit: UnitOfCompetency) => {
+    setCurrentUnit(unit);
+    setWorkspaceMode('rpl');
+  };
+
   const handleHistorySelect = (code: string) => {
     lookupUnit.mutate({ data: { unitCode: code } }, {
-      onSuccess: (data) => setCurrentUnit(data),
+      onSuccess: handleUnitLoaded,
       onError:   () => toast({ title: 'Lookup failed', description: 'Could not load the selected unit.', variant: 'destructive' }),
     });
   };
@@ -48,7 +55,7 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col h-full relative">
         <ScrollArea className="flex-1 h-full">
-          <div className="max-w-5xl mx-auto p-6 md:p-10 space-y-8 pb-24">
+          <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 pb-24">
 
             <header className="mb-8 hidden md:block space-y-3">
               <div className="flex items-end gap-3 flex-wrap">
@@ -72,7 +79,7 @@ export default function Home() {
             </header>
 
             <LookupForm
-              onUnitLoaded={setCurrentUnit}
+              onUnitLoaded={handleUnitLoaded}
               isPending={lookupUnit.isPending}
               numTasks={numTasks}
               setNumTasks={setNumTasks}
@@ -93,7 +100,16 @@ export default function Home() {
               </div>
             ) : currentUnit ? (
               <div className="mt-10">
-                <UnitDisplay unit={currentUnit} numTasks={numTasks} docTitle={docTitle} />
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-2 shadow-sm">
+                  <div className="px-2 text-xs font-medium text-zinc-500">Choose a workspace for this unit</div>
+                  <div className="flex rounded-lg bg-zinc-100 p-1">
+                    <button type="button" onClick={() => setWorkspaceMode('rpl')} className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${workspaceMode === 'rpl' ? 'bg-teal-800 text-white shadow-sm' : 'text-zinc-600 hover:text-zinc-900'}`}>RPL workflow</button>
+                    <button type="button" onClick={() => setWorkspaceMode('assessment')} className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${workspaceMode === 'assessment' ? 'bg-zinc-900 text-white shadow-sm' : 'text-zinc-600 hover:text-zinc-900'}`}>Assessment mapping</button>
+                  </div>
+                </div>
+                {workspaceMode === 'rpl'
+                  ? <RplWorkflow key={currentUnit.code} unit={currentUnit} />
+                  : <UnitDisplay unit={currentUnit} numTasks={numTasks} docTitle={docTitle} />}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-center py-24 px-4 mt-8 bg-white border border-zinc-300 border-dashed rounded-xl shadow-sm">

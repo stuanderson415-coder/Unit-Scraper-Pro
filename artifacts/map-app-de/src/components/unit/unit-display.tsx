@@ -250,9 +250,9 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
               {Array.from({ length: numTasks }, (_, i) => (
                 <th key={i} className="border border-gray-400 p-0 align-top font-normal">
                   <CellInput
-                    value={headers[i] ?? `Assessment ${i + 1}`}
+                    value={headers[i] ?? `Task ${i + 1}`}
                     onChange={v => setHeader(i, v)}
-                    placeholder={`Assessment ${i + 1}`}
+                    placeholder={`Task ${i + 1}`}
                     className="text-xs font-semibold text-gray-700 text-center p-2"
                   />
                 </th>

@@ -13,7 +13,6 @@ import {
   Paragraph,
   ShadingType,
   Table,
-  TableBorders,
   TableCell,
   TableRow,
   TextRun,
@@ -42,13 +41,13 @@ const BORDER_C  = '9CA3AF';   // cell border colour
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const borderSide = { style: BorderStyle.SINGLE, size: 6, color: BORDER_C } as const;
-const tableBorders: TableBorders = {
+const tableBorders = {
   top:     borderSide,
   bottom:  borderSide,
   left:    borderSide,
   right:   borderSide,
-  insideH: borderSide,
-  insideV: borderSide,
+  insideHorizontal: borderSide,
+  insideVertical: borderSide,
 };
 
 function para(text: string, opts: { bold?: boolean; italic?: boolean; color?: string; size?: number } = {}) {
