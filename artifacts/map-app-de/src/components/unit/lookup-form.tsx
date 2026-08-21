@@ -137,7 +137,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
           <div className="flex items-end lg:col-span-1">
             <Button type="submit" disabled={!code.trim() || !hasRequiredIntake || loading} className="h-9 w-full px-2 text-xs bg-teal-600 hover:bg-teal-700">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Start RPL Assessment
+              Start
             </Button>
           </div>
         </form>
