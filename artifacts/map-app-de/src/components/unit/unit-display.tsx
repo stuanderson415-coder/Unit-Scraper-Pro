@@ -140,10 +140,10 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
     <div className="space-y-4" data-testid="unit-display">
 
       {/* ── Header bar ── */}
-      <div className="flex items-start justify-between gap-4 pb-4 border-b border-gray-200">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-gray-200 pb-3">
         <div className="space-y-1">
-          <div className="flex items-center gap-3 flex-wrap">
-            <span className="font-mono text-base font-bold px-3 py-1 rounded border bg-zinc-100 border-zinc-300 text-zinc-800">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded border border-zinc-300 bg-zinc-100 px-2.5 py-0.5 font-mono text-sm font-bold text-zinc-800">
               {unit.code}
             </span>
             {unit.status && (
@@ -153,11 +153,11 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
             )}
             {unit.release && <span className="text-xs text-gray-400">Release {unit.release}</span>}
           </div>
-          <p className="text-base font-semibold text-gray-900">{unit.title}</p>
+           <p className="text-sm font-semibold text-gray-900">{unit.title}</p>
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-1.5">
           {/* Copy table to clipboard */}
           <Button
             onClick={handleCopy}
@@ -235,7 +235,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
             {unit.description && (
               <tr>
                 <td colSpan={1 + numTasks}
-                  className="border border-gray-500 bg-gray-800 text-white px-4 py-2.5 text-sm leading-relaxed">
+                   className="border border-gray-500 bg-gray-800 px-3 py-2 text-sm leading-relaxed text-white">
                   <span className="font-semibold text-gray-300 text-xs uppercase tracking-wider mr-2">Application</span>
                   {unit.description}
                 </td>
@@ -244,7 +244,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
 
             {/* Column headers — editable */}
             <tr className="bg-gray-100">
-              <th className="border border-gray-400 px-3 py-2 text-left text-xs font-bold text-gray-700 uppercase tracking-wide align-top">
+               <th className="border border-gray-400 px-2.5 py-1.5 text-left text-xs font-bold uppercase tracking-wide text-gray-700 align-top">
                 Performance Criteria / Requirement
               </th>
               {Array.from({ length: numTasks }, (_, i) => (
@@ -253,7 +253,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
                     value={headers[i] ?? `Task ${i + 1}`}
                     onChange={v => setHeader(i, v)}
                     placeholder={`Task ${i + 1}`}
-                    className="text-xs font-semibold text-gray-700 text-center p-2"
+                     className="p-1.5 text-center text-xs font-semibold text-gray-700"
                   />
                 </th>
               ))}
@@ -267,7 +267,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
                   return (
                     <tr key={row.key}>
                       <td colSpan={1 + numTasks}
-                        className="border border-gray-400 bg-white px-3 py-2 font-bold text-gray-900 text-sm">
+                         className="border border-gray-400 bg-white px-2.5 py-1.5 text-sm font-bold text-gray-900">
                         {row.label}
                       </td>
                     </tr>
@@ -277,7 +277,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
                   return (
                     <tr key={row.key}>
                       <td colSpan={1 + numTasks}
-                        className="border border-gray-400 bg-gray-200 text-gray-800 px-3 py-2 font-bold text-xs uppercase tracking-wider">
+                         className="border border-gray-400 bg-gray-200 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-gray-800">
                         {row.label}
                       </td>
                     </tr>
@@ -287,7 +287,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
                 return (
                   <tr key={row.key}>
                     <td colSpan={1 + numTasks}
-                      className="border border-gray-300 bg-white px-4 py-1.5 text-xs italic text-gray-500">
+                       className="border border-gray-300 bg-white px-3 py-1 text-xs italic text-gray-500">
                       {row.label}
                     </td>
                   </tr>
@@ -297,7 +297,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
               // Data row
               return (
                 <tr key={row.key} className="hover:bg-gray-50/60">
-                  <td className="border border-gray-300 px-3 py-2 text-gray-800 leading-snug align-top text-sm bg-white">
+                     <td className="border border-gray-300 bg-white px-2.5 py-1.5 text-sm leading-snug text-gray-800 align-top">
                     {row.label}
                   </td>
                   {Array.from({ length: numTasks }, (_, i) => (
@@ -306,7 +306,7 @@ export function UnitDisplay({ unit, numTasks, docTitle }: Props) {
                         value={cellValue(row.key, i)}
                         onChange={v => setCell(row.key, i, v)}
                         placeholder="…"
-                        className="text-sm p-2"
+                         className="p-1.5 text-sm"
                       />
                     </td>
                   ))}

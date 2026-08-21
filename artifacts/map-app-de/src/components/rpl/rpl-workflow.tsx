@@ -95,7 +95,7 @@ function EvidenceTile({
     <div
       draggable={Boolean(onDragStart)}
       onDragStart={onDragStart}
-      className={`group relative block w-full rounded-md border-l-4 px-2.5 py-2 text-left shadow-[2px_2px_0_rgba(24,24,27,0.16)] transition hover:-translate-y-0.5 hover:shadow-[3px_3px_0_rgba(24,24,27,0.2)] ${selected ? 'ring-2 ring-zinc-900 ring-offset-2' : ''} ${compact ? 'text-[11px]' : 'text-xs'}`}
+      className={`group relative block w-full rounded-md border-l-4 px-2 py-1.5 text-left shadow-[2px_2px_0_rgba(24,24,27,0.16)] transition hover:-translate-y-0.5 hover:shadow-[3px_3px_0_rgba(24,24,27,0.2)] ${selected ? 'ring-2 ring-zinc-900 ring-offset-2' : ''} ${compact ? 'text-[11px]' : 'text-xs'}`}
       style={tileStyle(evidence.color)}
     >
       {onSelect ? (
@@ -123,7 +123,7 @@ function EvidenceTile({
 }
 
 function FieldLabel({ children }: { children: string }) {
-  return <label className="mb-1.5 block text-xs font-bold uppercase tracking-[0.11em] text-zinc-600">{children}</label>;
+  return <label className="mb-1 block text-xs font-bold uppercase tracking-[0.11em] text-zinc-600">{children}</label>;
 }
 
 export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapping }: { unit: UnitOfCompetency; studentNumber?: string; prefill?: StudentDetails; onOpenAssessmentMapping?: () => void }) {
@@ -281,15 +281,15 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   };
 
   const renderStudent = () => (
-    <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+    <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
         <p className="text-sm font-semibold text-teal-800">Start an RPL record</p>
-        <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">Student details</h2>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-600">
+        <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Student details</h2>
+        <p className="mt-1 max-w-xl text-sm leading-5 text-zinc-600">
           This record is saved in this browser against the unit and student number, so you can return to the RPL assessment later.
         </p>
         {savedStudents.length > 0 && (
-          <div className="mb-6 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+          <div className="mb-4 flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-2.5">
             <span className="mr-1 text-xs font-semibold text-zinc-600">Open a saved student:</span>
             {savedStudents.map(student => (
               <button key={student.studentNumber} type="button" onClick={() => openSavedStudent(student.studentNumber)} className={`rounded-full border px-2.5 py-1 text-xs font-medium ${student.studentNumber === activeRecordStudentNumber ? 'border-teal-700 bg-teal-100 text-teal-900' : 'border-zinc-300 bg-white text-zinc-700 hover:border-teal-400'}`}>
@@ -299,14 +299,14 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
             <button type="button" onClick={startNewStudent} className="rounded-full border border-dashed border-zinc-400 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:border-teal-500 hover:text-teal-800">New record</button>
           </div>
         )}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <FieldLabel>Student name</FieldLabel>
             <input
               value={record.student.name}
               onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, name: event.target.value } }))}
               placeholder="e.g. Alex Morgan"
-              className="h-11 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+              className="h-10 w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
             />
           </div>
           <div>
@@ -315,7 +315,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
               value={record.student.studentNumber}
               onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, studentNumber: event.target.value } }))}
               placeholder="e.g. 12345678"
-              className="h-11 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+              className="h-10 w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
             />
           </div>
           <div>
@@ -324,16 +324,16 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
               value={record.student.trainerName}
               onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, trainerName: event.target.value } }))}
               placeholder="e.g. Jordan Lee"
-              className="h-11 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+              className="h-10 w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
             />
           </div>
           <div>
-            <FieldLabel>Organisation / RTO</FieldLabel>
+            <FieldLabel>Parent Qualification</FieldLabel>
             <input
               value={record.student.organisation}
               onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, organisation: event.target.value } }))}
               placeholder="e.g. Your RTO"
-              className="h-11 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+              className="h-10 w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
             />
           </div>
           <div>
@@ -342,29 +342,29 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
               type="date"
               value={record.student.assessmentDate}
               onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, assessmentDate: event.target.value } }))}
-              className="h-11 w-full rounded-md border border-zinc-300 bg-zinc-50 px-3 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+              className="h-10 w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
             />
           </div>
         </div>
         {recordConflict && (
-          <div className="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+          <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
             <p>A saved record already exists for student number <strong>{recordConflict}</strong>. Open the saved record to avoid overwriting it, or intentionally replace it with the details above.</p>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={() => openSavedStudent(recordConflict)}>Open saved record</Button>
               <Button size="sm" className="bg-amber-700 hover:bg-amber-600" onClick={replaceSavedStudent}>Replace saved record</Button>
             </div>
           </div>
         )}
-        <div className="mt-8 flex justify-end">
+        <div className="mt-5 flex justify-end">
           <Button onClick={saveStudentAndContinue} disabled={!hasStudent} className="bg-teal-800 hover:bg-teal-700">
             Save and continue <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </section>
-      <aside className="rounded-2xl border border-teal-950 bg-teal-900 p-6 text-teal-50 shadow-sm">
+      <aside className="rounded-xl border border-teal-950 bg-teal-900 p-4 text-teal-50 shadow-sm">
         <span className="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">RPL record</span>
-        <p className="mt-4 text-lg font-semibold leading-7">Evidence is recorded once, then mapped to every requirement it supports.</p>
-        <ol className="mt-7 space-y-4 text-sm leading-5 text-teal-100">
+        <p className="mt-3 text-base font-semibold leading-6">Evidence is recorded once, then mapped to every requirement it supports.</p>
+        <ol className="mt-5 space-y-3 text-sm leading-5 text-teal-100">
           <li><span className="mr-2 font-mono text-teal-300">01</span>Add the student's details.</li>
           <li><span className="mr-2 font-mono text-teal-300">02</span>Log each piece of evidence and its reference.</li>
           <li><span className="mr-2 font-mono text-teal-300">03</span>Map evidence, resolve gaps, then export the final record.</li>
@@ -374,36 +374,36 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   );
 
   const renderEvidence = () => (
-    <div className="space-y-6">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="space-y-4">
+      <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-teal-800">Evidence register</p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">Log a piece of evidence</h2>
+            <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Log a piece of evidence</h2>
           </div>
           <Badge variant="outline" className="border-teal-200 bg-teal-50 text-teal-800">{record.evidence.length} logged</Badge>
         </div>
-        <div className="mt-5 grid gap-3 lg:grid-cols-[1.2fr_1fr_1.3fr_auto]">
+        <div className="mt-4 grid gap-2.5 lg:grid-cols-[1.2fr_1fr_1.3fr_auto]">
           <input
             value={newEvidence.title}
             onChange={event => setNewEvidence(current => ({ ...current, title: event.target.value }))}
             onKeyDown={event => { if (event.key === 'Enter') addEvidence(); }}
             placeholder="Evidence title"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+             className="h-9 rounded-md border border-zinc-300 px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
           />
           <input
             value={newEvidence.reference}
             onChange={event => setNewEvidence(current => ({ ...current, reference: event.target.value }))}
             placeholder="Reference / date"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+             className="h-9 rounded-md border border-zinc-300 px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
           />
           <input
             value={newEvidence.notes}
             onChange={event => setNewEvidence(current => ({ ...current, notes: event.target.value }))}
             placeholder="Brief notes (optional)"
-            className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+             className="h-9 rounded-md border border-zinc-300 px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
           />
-          <Button onClick={addEvidence} disabled={!newEvidence.title.trim()} className="h-10 bg-teal-800 hover:bg-teal-700">
+           <Button onClick={addEvidence} disabled={!newEvidence.title.trim()} className="h-9 bg-teal-800 hover:bg-teal-700">
             <Plus className="mr-1.5 h-4 w-4" />Add evidence
           </Button>
         </div>
@@ -424,18 +424,18 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
 
       {record.evidence.length ? (
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {record.evidence.map((evidence, index) => (
-            <article key={evidence.id} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-              <div className="mb-3 flex items-center justify-between">
+           {record.evidence.map((evidence, index) => (
+             <article key={evidence.id} className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
+               <div className="mb-2 flex items-center justify-between">
                 <span className="font-mono text-xs font-bold text-zinc-500">{evidenceCode(index)}</span>
                 <button type="button" onClick={() => deleteEvidence(evidence.id)} className="rounded p-1 text-zinc-400 hover:bg-rose-50 hover:text-rose-600" aria-label={`Delete ${evidence.title}`}>
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
               <input value={evidence.title} onChange={event => updateEvidence(evidence.id, { title: event.target.value })} aria-label={`${evidenceCode(index)} title`} className="w-full border-0 border-b border-zinc-200 pb-1.5 text-sm font-semibold outline-none focus:border-teal-700" />
-              <input value={evidence.reference} onChange={event => updateEvidence(evidence.id, { reference: event.target.value })} aria-label={`${evidenceCode(index)} reference`} placeholder="Reference / date" className="mt-3 w-full border-0 border-b border-zinc-100 pb-1.5 text-xs text-zinc-600 outline-none focus:border-teal-700" />
-              <textarea value={evidence.notes} onChange={event => updateEvidence(evidence.id, { notes: event.target.value })} aria-label={`${evidenceCode(index)} notes`} placeholder="Evidence details or assessor notes" rows={2} className="mt-3 w-full resize-none rounded-md bg-zinc-50 p-2 text-xs outline-none ring-1 ring-zinc-100 focus:ring-2 focus:ring-teal-200" />
-              <div className="mt-3 flex gap-1.5">
+               <input value={evidence.reference} onChange={event => updateEvidence(evidence.id, { reference: event.target.value })} aria-label={`${evidenceCode(index)} reference`} placeholder="Reference / date" className="mt-2 w-full border-0 border-b border-zinc-100 pb-1.5 text-xs text-zinc-600 outline-none focus:border-teal-700" />
+               <textarea value={evidence.notes} onChange={event => updateEvidence(evidence.id, { notes: event.target.value })} aria-label={`${evidenceCode(index)} notes`} placeholder="Evidence details or assessor notes" rows={2} className="mt-2 w-full resize-none rounded-md bg-zinc-50 p-2 text-xs outline-none ring-1 ring-zinc-100 focus:ring-2 focus:ring-teal-200" />
+               <div className="mt-2 flex gap-1.5">
                 {EVIDENCE_COLOURS.map(color => (
                   <button key={color.value} type="button" onClick={() => updateEvidence(evidence.id, { color: color.value })} aria-label={`Set ${evidence.title} to ${color.name}`} className={`h-5 w-5 rounded-full border-2 transition ${evidence.color === color.value ? 'scale-110 border-zinc-900' : 'border-white hover:scale-110'}`} style={{ backgroundColor: color.value }} />
                 ))}
@@ -452,11 +452,11 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   );
 
   const renderMapping = () => (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-teal-800">Landscape workspace</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">Map evidence to unit requirements</h2>
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Map evidence to unit requirements</h2>
           <p className="mt-1 text-sm text-zinc-600">Drag a tile onto a requirement, or select a tile then click a mapping cell. A tile can be used more than once.</p>
         </div>
         <div className="flex gap-2 text-xs">
@@ -469,12 +469,12 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
           Add at least one evidence item in the Evidence log before mapping it to this unit.
         </div>
       )}
-      <div className="overflow-hidden rounded-xl border border-zinc-300 bg-zinc-200 shadow-sm">
-        <div className="grid min-w-[980px] grid-cols-[250px_1fr]">
-          <aside ref={paletteRef} className="border-r border-zinc-300 bg-zinc-950 p-4 text-white">
+      <div className="w-full max-w-full overflow-x-auto rounded-xl border border-zinc-300 bg-zinc-200 shadow-sm">
+        <div className="grid min-w-[900px] grid-cols-[220px_1fr]">
+          <aside ref={paletteRef} className="border-r border-zinc-300 bg-zinc-950 p-3 text-white">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-300">Evidence palette</p>
-            <p className="mt-2 text-xs leading-5 text-zinc-400">Drag evidence to the matrix. Click once to select it for click-to-map mode.</p>
-            <div className="mt-4 space-y-3">
+            <p className="mt-1.5 text-xs leading-5 text-zinc-400">Drag evidence to the matrix. Click once to select it for click-to-map mode.</p>
+            <div className="mt-3 space-y-2">
               {record.evidence.map((item, index) => (
                 <EvidenceTile
                   key={item.id}
@@ -489,32 +489,32 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
             </div>
           </aside>
           <div className="overflow-x-auto bg-white">
-            <table className="w-full min-w-[730px] border-collapse text-sm">
+             <table className="w-full min-w-[680px] border-collapse text-sm">
               <thead>
                 <tr className="bg-zinc-100">
-                  <th className="w-[43%] border-b border-zinc-300 px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.1em] text-zinc-600">Unit requirement</th>
-                  <th className="border-b border-l border-zinc-300 px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.1em] text-zinc-600">Evidence mapped</th>
+                   <th className="w-[43%] border-b border-zinc-300 px-3 py-2 text-left text-xs font-bold uppercase tracking-[0.1em] text-zinc-600">Unit requirement</th>
+                   <th className="border-b border-l border-zinc-300 px-3 py-2 text-left text-xs font-bold uppercase tracking-[0.1em] text-zinc-600">Evidence mapped</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map(row => {
                   if (row.kind === 'span') {
-                    return <tr key={row.key}><td colSpan={2} className={`border-b border-zinc-300 px-4 py-2.5 ${row.style === 'section' ? 'bg-teal-900 text-xs font-bold uppercase tracking-[0.12em] text-white' : row.style === 'element' ? 'bg-zinc-100 font-bold text-zinc-900' : 'bg-white text-xs italic text-zinc-500'}`}>{row.label}</td></tr>;
+                    return <tr key={row.key}><td colSpan={2} className={`border-b border-zinc-300 px-3 py-2 ${row.style === 'section' ? 'bg-teal-900 text-xs font-bold uppercase tracking-[0.12em] text-white' : row.style === 'element' ? 'bg-zinc-100 font-bold text-zinc-900' : 'bg-white text-xs italic text-zinc-500'}`}>{row.label}</td></tr>;
                   }
                   const mappedIds = record.mappings[row.key] ?? [];
                   const mapped = mappedIds.map(id => ({ id, evidence: evidenceById.get(id) })).filter((item): item is { id: string; evidence: EvidenceItem } => Boolean(item.evidence));
                   return (
                     <tr key={row.key} className="align-top hover:bg-zinc-50">
-                      <td className="border-b border-zinc-200 px-4 py-3 leading-5 text-zinc-800">{row.label}</td>
+                       <td className="border-b border-zinc-200 px-3 py-2.5 leading-5 text-zinc-800">{row.label}</td>
                       <td
                         onDragOver={event => event.preventDefault()}
                         onDrop={() => onDrop(row.key)}
-                        className={`min-h-16 border-b border-l border-zinc-200 px-3 py-2 ${selectedEvidenceId ? 'bg-teal-50/40' : 'bg-white'}`}
+                         className={`min-h-14 border-b border-l border-zinc-200 px-2.5 py-1.5 ${selectedEvidenceId ? 'bg-teal-50/40' : 'bg-white'}`}
                       >
                         {mapped.length ? (
-                          <div className="flex flex-wrap gap-2">
+                           <div className="flex flex-wrap gap-1.5">
                             {mapped.map(({ id, evidence }) => (
-                              <div key={id} className="min-w-[155px] max-w-[245px]">
+                               <div key={id} className="min-w-[145px] max-w-[225px]">
                                 <EvidenceTile evidence={evidence} index={record.evidence.findIndex(item => item.id === id)} compact onRemove={() => unmapEvidence(row.key, id)} />
                               </div>
                             ))}
@@ -525,7 +525,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
                           onClick={() => onDrop(row.key)}
                           disabled={!selectedEvidenceId}
                           aria-label={selectedEvidence ? `Map ${selectedEvidence.title} to ${row.label}` : `Select evidence before mapping to ${row.label}`}
-                          className={`mt-1.5 rounded px-2 py-1 text-xs font-medium outline-none transition focus:ring-2 focus:ring-teal-700 focus:ring-offset-2 ${selectedEvidenceId ? 'bg-teal-800 text-white hover:bg-teal-700' : 'text-zinc-400 hover:text-zinc-500'}`}
+                           className={`mt-1 rounded px-2 py-1 text-xs font-medium outline-none transition focus:ring-2 focus:ring-teal-700 focus:ring-offset-2 ${selectedEvidenceId ? 'bg-teal-800 text-white hover:bg-teal-700' : 'text-zinc-400 hover:text-zinc-500'}`}
                         >
                           {selectedEvidenceId ? `Map ${selectedEvidence?.title}` : mapped.length ? 'Add more evidence' : 'Select evidence to map'}
                         </button>
@@ -543,11 +543,11 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   );
 
   const renderGaps = () => (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-teal-800">Evidence gaps</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">Interview and oral questions</h2>
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Interview and oral questions</h2>
           <p className="mt-1 text-sm text-zinc-600">These are requirements without directly mapped evidence. Record how the gap was explored and the assessor’s outcome.</p>
         </div>
         <Badge className={uncoveredRows.length ? 'bg-amber-100 text-amber-900 hover:bg-amber-100' : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-100'}>
@@ -555,11 +555,11 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
         </Badge>
       </div>
       {uncoveredRows.length ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {uncoveredRows.map(row => {
             const interview = record.interviews[row.key] ?? { question: '', studentResponse: '', assessorNotes: '', outcome: 'pending' as const };
             return (
-              <article key={row.key} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+              <article key={row.key} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <p className="max-w-3xl text-sm font-semibold leading-6 text-zinc-900">{row.label}</p>
                   <select value={interview.outcome} onChange={event => updateInterview(row.key, { outcome: event.target.value as InterviewOutcome })} className="h-9 rounded-md border border-zinc-300 bg-zinc-50 px-2 text-xs font-medium outline-none focus:border-teal-700">
@@ -568,7 +568,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
                     <option value="not-resolved">Not resolved</option>
                   </select>
                 </div>
-                <div className="mt-4 grid gap-3 lg:grid-cols-3">
+                <div className="mt-3 grid gap-2.5 lg:grid-cols-3">
                   <textarea value={interview.question} onChange={event => updateInterview(row.key, { question: event.target.value })} rows={4} placeholder="Interview / oral question prompt" className="resize-none rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100" />
                   <textarea value={interview.studentResponse} onChange={event => updateInterview(row.key, { studentResponse: event.target.value })} rows={4} placeholder="Student response / new evidence" className="resize-none rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100" />
                   <textarea value={interview.assessorNotes} onChange={event => updateInterview(row.key, { assessorNotes: event.target.value })} rows={4} placeholder="Assessor notes and rationale" className="resize-none rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100" />
@@ -588,10 +588,10 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   );
 
   const renderReview = () => (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <p className="text-sm font-semibold text-teal-800">Pre-finalisation check</p>
-        <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">Review the RPL record</h2>
+        <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Review the RPL record</h2>
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
@@ -600,30 +600,30 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
           ['Directly covered', `${coveredRows} of ${requirementRows.length}`, 'text-emerald-900 bg-emerald-50 border-emerald-200'],
           ['Gaps resolved', `${resolvedGaps} of ${uncoveredRows.length}`, 'text-amber-900 bg-amber-50 border-amber-200'],
         ].map(([label, value, classes]) => (
-          <article key={label} className={`rounded-xl border p-4 ${classes}`}>
+            <article key={label} className={`rounded-xl border p-3 ${classes}`}>
             <p className="text-xs font-bold uppercase tracking-[0.12em] opacity-70">{label}</p>
-            <p className="mt-2 text-lg font-bold">{value}</p>
+             <p className="mt-1.5 text-lg font-bold">{value}</p>
           </article>
         ))}
       </div>
       <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-        <div className="border-b border-zinc-200 px-5 py-4">
+         <div className="border-b border-zinc-200 px-4 py-3">
           <h3 className="font-semibold text-zinc-900">Requirement coverage</h3>
           <p className="mt-1 text-xs text-zinc-500">A direct evidence mapping is shown below; interview records can be completed in the Gaps screen.</p>
         </div>
         <div className="max-h-[520px] overflow-auto">
           <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-zinc-100">
-              <tr><th className="px-5 py-3 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Requirement</th><th className="px-5 py-3 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Evidence</th><th className="px-5 py-3 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Status</th></tr>
+             <thead className="sticky top-0 bg-zinc-100">
+               <tr><th className="px-4 py-2.5 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Requirement</th><th className="px-4 py-2.5 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Evidence</th><th className="px-4 py-2.5 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Status</th></tr>
             </thead>
             <tbody>
               {requirementRows.map(row => {
                 const mapped = (record.mappings[row.key] ?? []).map(id => evidenceById.get(id)).filter((item): item is EvidenceItem => Boolean(item));
                 const interview = record.interviews[row.key];
                 return <tr key={row.key} className="border-t border-zinc-100 align-top">
-                  <td className="px-5 py-3 text-zinc-800">{row.label}</td>
-                  <td className="px-5 py-3">{mapped.length ? <div className="flex flex-wrap gap-1.5">{mapped.map(item => <span key={item.id} style={tileStyle(item.color)} className="rounded border-l-4 px-2 py-1 text-xs font-semibold">{item.title}</span>)}</div> : <span className="text-xs text-zinc-400">No direct evidence</span>}</td>
-                  <td className="px-5 py-3 text-xs font-medium">{mapped.length ? <span className="text-emerald-700">Mapped</span> : interview ? <span className={interview.outcome === 'resolved' ? 'text-teal-700' : 'text-amber-700'}>{statusForOutcome(interview.outcome)}</span> : <span className="text-amber-700">Gap</span>}</td>
+                   <td className="px-4 py-2.5 text-zinc-800">{row.label}</td>
+                   <td className="px-4 py-2.5">{mapped.length ? <div className="flex flex-wrap gap-1.5">{mapped.map(item => <span key={item.id} style={tileStyle(item.color)} className="rounded border-l-4 px-2 py-1 text-xs font-semibold">{item.title}</span>)}</div> : <span className="text-xs text-zinc-400">No direct evidence</span>}</td>
+                   <td className="px-4 py-2.5 text-xs font-medium">{mapped.length ? <span className="text-emerald-700">Mapped</span> : interview ? <span className={interview.outcome === 'resolved' ? 'text-teal-700' : 'text-amber-700'}>{statusForOutcome(interview.outcome)}</span> : <span className="text-amber-700">Gap</span>}</td>
                 </tr>;
               })}
             </tbody>
@@ -634,14 +634,14 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   );
 
   const renderFinal = () => (
-    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+    <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+      <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
         <p className="text-sm font-semibold text-teal-800">Final output</p>
-        <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900">Final RPL mapping</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-600">
+        <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Final RPL mapping</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-5 text-zinc-600">
           Download a landscape, Word-compatible RPL record containing the student details, evidence log, mapping matrix, interview records and printable student/assessor signature boxes.
         </p>
-        <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+        <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
           <div className="grid gap-2 sm:grid-cols-2">
             <span><strong>Student:</strong> {record.student.name || 'Not recorded'}</span>
             <span><strong>Student number:</strong> {record.student.studentNumber || 'Not recorded'}</span>
@@ -654,17 +654,17 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
         <Button
           onClick={() => { exportRplToWord(unit, record); setExported(true); }}
           disabled={!hasStudent}
-          className="mt-6 bg-teal-800 hover:bg-teal-700"
+           className="mt-4 bg-teal-800 hover:bg-teal-700"
         >
           {exported ? <Check className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
           {exported ? 'Downloaded RPL mapping' : 'Download landscape Word record'}
         </Button>
         {!hasStudent && <p className="mt-2 text-xs text-rose-700">Add the student name and student number before finalising.</p>}
       </section>
-      <aside className="rounded-2xl border border-teal-900 bg-teal-950 p-6 text-teal-50 shadow-sm">
+      <aside className="rounded-xl border border-teal-900 bg-teal-950 p-4 text-teal-50 shadow-sm">
         <FileCheck2 className="h-7 w-7 text-teal-300" />
-        <h3 className="mt-4 text-lg font-semibold">Ready for signatures</h3>
-        <p className="mt-2 text-sm leading-6 text-teal-100">The export includes separate declaration boxes for the student and assessor, with room for their signatures and dates.</p>
+        <h3 className="mt-3 text-lg font-semibold">Ready for signatures</h3>
+        <p className="mt-1.5 text-sm leading-5 text-teal-100">The export includes separate declaration boxes for the student and assessor, with room for their signatures and dates.</p>
       </aside>
     </div>
   );
@@ -679,16 +679,16 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   };
 
   return (
-    <div className="space-y-6" data-testid="rpl-workflow">
-      <header className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm">
+    <div className="space-y-4" data-testid="rpl-workflow">
+      <header className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-sm font-bold text-teal-800">{unit.code}</span>
             <Badge variant="outline" className="border-zinc-300 text-zinc-600">RPL workflow</Badge>
           </div>
-          <h1 className="mt-1 text-lg font-bold text-zinc-900">{unit.title}</h1>
+           <h1 className="mt-1 text-base font-bold text-zinc-900">{unit.title}</h1>
         </div>
-        <div className="flex items-center gap-4 text-right text-xs leading-5 text-zinc-500">
+        <div className="flex items-center gap-3 text-right text-xs leading-5 text-zinc-500">
           <div>
             <span className="block font-semibold text-zinc-700">{record.student.name || 'No student selected'}</span>
             <span>{record.student.studentNumber || 'Student number required'}</span>
@@ -701,24 +701,24 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
         </div>
       </header>
 
-      <nav aria-label="RPL workflow steps" className="overflow-x-auto pb-1">
-        <ol className="flex min-w-[710px] items-center">
+      <nav aria-label="RPL workflow steps" className="pb-1">
+        <ol className="grid grid-cols-3 gap-1 sm:flex sm:items-center">
           {STAGES.map((item, index) => {
             const Icon = item.icon;
             const active = item.id === stage;
             const complete = index < stageIndex;
-            return <li key={item.id} className="flex flex-1 items-center last:flex-none">
+             return <li key={item.id} className="flex min-w-0 flex-col items-center sm:flex-1 sm:flex-row sm:last:flex-none">
               <button
                 type="button"
                 onClick={() => setStage(item.id)}
-                className={`group flex min-w-[100px] flex-col items-center gap-1.5 text-center outline-none ${active ? 'text-teal-900' : complete ? 'text-teal-700' : 'text-zinc-500'}`}
+                 className={`group flex w-full min-w-0 flex-col items-center gap-1 text-center outline-none sm:w-auto sm:min-w-[88px] ${active ? 'text-teal-900' : complete ? 'text-teal-700' : 'text-zinc-500'}`}
               >
                 <span className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold transition ${active ? 'border-teal-800 bg-teal-800 text-white shadow-sm' : complete ? 'border-teal-200 bg-teal-100 text-teal-800' : 'border-zinc-300 bg-white text-zinc-500 group-hover:border-teal-400'}`}>
                   {complete ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
                 </span>
                 <span className="text-[11px] font-semibold leading-4">{item.short}</span>
               </button>
-              {index < STAGES.length - 1 && <span className={`mx-1 h-px flex-1 ${index < stageIndex ? 'bg-teal-300' : 'bg-zinc-300'}`} />}
+               {index < STAGES.length - 1 && <span className={`mx-1 hidden h-px flex-1 sm:block ${index < stageIndex ? 'bg-teal-300' : 'bg-zinc-300'}`} />}
             </li>;
           })}
         </ol>
@@ -726,7 +726,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
 
       <section>{stageContent[stage]()}</section>
 
-      <footer className="flex items-center justify-between border-t border-zinc-300 pt-5">
+      <footer className="flex items-center justify-between border-t border-zinc-300 pt-4">
         <Button variant="outline" onClick={goPrevious} disabled={stageIndex === 0}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Previous
         </Button>

@@ -40,24 +40,24 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
   };
 
   return (
-    <div className="w-56 flex flex-col h-full overflow-hidden shrink-0 hidden md:flex bg-zinc-700">
-      <div className="p-2.5 border-b border-zinc-600 flex items-center justify-between bg-zinc-800">
+    <div className="hidden h-full w-52 shrink-0 flex-col overflow-hidden bg-zinc-700 md:flex">
+      <div className="flex items-center justify-between border-b border-zinc-600 bg-zinc-800 p-2">
         <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-100">
           <History className="h-3.5 w-3.5 text-white" />
           Applications in progress
         </div>
         {progress.length > 0 && (
           <Button variant="ghost" size="icon" onClick={handleClear} title="Clear history"
-            className="h-8 w-8 text-zinc-300 hover:text-red-400 hover:bg-zinc-700">
+            className="h-7 w-7 text-zinc-300 hover:bg-zinc-700 hover:text-red-400">
             <Trash2 className="w-4 h-4" />
           </Button>
         )}
       </div>
       <ScrollArea className="flex-1">
         {progress.length === 0 ? (
-          <div className="p-6 text-center text-sm text-zinc-200 flex flex-col items-center gap-3 mt-10">
-            <div className="w-12 h-12 rounded-full bg-zinc-600 flex items-center justify-center mb-2">
-              <ClipboardCheck className="w-6 h-6 text-white" />
+          <div className="mt-6 flex flex-col items-center gap-2 p-4 text-center text-sm text-zinc-200">
+            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-zinc-600">
+              <ClipboardCheck className="h-5 w-5 text-white" />
             </div>
             <p>No applications in progress.</p>
             <p className="text-xs text-zinc-300">Start an RPL assessment to see it here.</p>
@@ -67,7 +67,7 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
             {progress.map(entry => (
               <div
                 key={`${entry.unitCode}-${entry.studentNumber}`}
-                className="p-3 hover:bg-purple-600/20 cursor-pointer group transition-colors flex gap-3 items-start border-l-2 border-transparent hover:border-purple-500"
+                 className="group flex cursor-pointer items-start gap-2 border-l-2 border-transparent p-2.5 transition-colors hover:border-purple-500 hover:bg-purple-600/20"
                 onClick={() => onSelect(entry.unitCode, entry.studentNumber)}
               >
                 <div className="mt-0.5">

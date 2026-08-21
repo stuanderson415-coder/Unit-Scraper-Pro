@@ -98,13 +98,13 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
 
   return (
     <Card className="border-teal-300/60 bg-white shadow-sm">
-      <CardHeader className="flex-row items-start justify-between gap-4 space-y-0 border-b border-zinc-100 pb-4">
+      <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 border-b border-zinc-100 pb-3">
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-teal-700">
             <UserRound className="h-4 w-4" /> RPL intake
           </div>
-          <CardTitle className="mt-1 text-xl font-semibold tracking-tight text-zinc-900">Start an RPL assessment</CardTitle>
-          <CardDescription className="mt-1 text-sm">Enter the key people and unit once, then follow the guided RPL workflow.</CardDescription>
+          <CardTitle className="mt-1 text-lg font-semibold tracking-tight text-zinc-900">Start an RPL assessment</CardTitle>
+          <CardDescription className="mt-1 text-xs">Enter the key people and unit once, then follow the guided RPL workflow.</CardDescription>
         </div>
         <div className="hidden rounded-lg bg-teal-50 px-3 py-2 text-right text-xs leading-5 text-teal-900 sm:block">
           <span className="block font-semibold">Recognition of Prior Learning</span>
@@ -112,36 +112,36 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-5">
-        <form onSubmit={handleCodeSubmit} className="grid gap-4 lg:grid-cols-6">
-          <label className="grid gap-1.5 lg:col-span-2">
+      <CardContent className="pt-4">
+        <form onSubmit={handleCodeSubmit} className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)_minmax(9rem,1fr)]">
+          <label className="grid min-w-0 gap-1">
             <span className="text-xs font-semibold text-zinc-700">Student name <span className="text-rose-600">*</span></span>
             <Input placeholder="e.g. Alex Morgan" value={intake.name} onChange={event => updateIntake({ name: event.target.value })} disabled={loading} />
           </label>
-          <label className="grid gap-1.5 lg:col-span-1">
+          <label className="grid min-w-0 gap-1">
             <span className="text-xs font-semibold text-zinc-700">Student number <span className="text-rose-600">*</span></span>
             <Input placeholder="e.g. 12345678" value={intake.studentNumber} onChange={event => updateIntake({ studentNumber: event.target.value })} disabled={loading} />
           </label>
-          <label className="grid gap-1.5 lg:col-span-2">
+          <label className="grid min-w-0 gap-1">
             <span className="text-xs font-semibold text-zinc-700">Trainer / assessor</span>
             <Input placeholder="e.g. Jordan Lee" value={intake.trainerName} onChange={event => updateIntake({ trainerName: event.target.value })} disabled={loading} />
           </label>
-          <label className="grid gap-1.5 lg:col-span-1">
+          <label className="grid min-w-0 gap-1">
             <span className="text-xs font-semibold text-zinc-700">Assessment date</span>
-            <div className="relative">
+            <div className="relative min-w-0">
               <CalendarDays className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
-              <Input type="date" value={intake.assessmentDate} onChange={event => updateIntake({ assessmentDate: event.target.value })} className="pl-9" disabled={loading} />
+              <Input type="date" value={intake.assessmentDate} onChange={event => updateIntake({ assessmentDate: event.target.value })} className="min-w-0 pl-9" disabled={loading} />
             </div>
           </label>
-          <label className="grid gap-1.5 lg:col-span-3">
-            <span className="text-xs font-semibold text-zinc-700">Organisation / RTO</span>
-            <Input placeholder="e.g. Your RTO or workplace" value={intake.organisation} onChange={event => updateIntake({ organisation: event.target.value })} disabled={loading} />
+          <label className="grid min-w-0 gap-1 lg:col-span-2">
+            <span className="text-xs font-semibold text-zinc-700">Parent Qualification</span>
+            <Input placeholder="e.g. Certificate III in Community Services" value={intake.organisation} onChange={event => updateIntake({ organisation: event.target.value })} disabled={loading} />
           </label>
-          <label className="grid gap-1.5 lg:col-span-2">
+          <label className="grid min-w-0 gap-1">
             <span className="text-xs font-semibold text-zinc-700">Unit seeking RPL for <span className="text-rose-600">*</span></span>
             <Input placeholder="e.g. CHCCCS007" value={code} onChange={event => setCode(event.target.value.toUpperCase())} className="font-mono" disabled={loading} />
           </label>
-          <div className="flex items-end lg:col-span-1">
+          <div className="flex min-w-0 items-end">
             <Button type="submit" disabled={loading} className="h-9 w-full px-2 text-xs bg-teal-600 hover:bg-teal-700">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Start
@@ -149,9 +149,9 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
           </div>
         </form>
 
-        <details className="mt-4 border-t border-zinc-100 pt-2">
+        <details className="mt-3 border-t border-zinc-100 pt-2">
           <summary className="cursor-pointer text-[11px] font-medium text-zinc-500 hover:text-zinc-800">Pre-RPL Interview</summary>
-          <div className="mt-2 space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
+          <div className="mt-2 space-y-2.5 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
             <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-teal-800">RPL Pre-Assessment</h3>
             <section className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
               <div className="flex items-center gap-2">
@@ -175,12 +175,12 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
               </label>
             </section>
 
-            <section className="border-t border-zinc-200 pt-3">
-              <div className="mb-2">
+            <section className="border-t border-zinc-200 pt-2.5">
+              <div className="mb-1.5">
                 <h3 className="text-xs font-semibold text-zinc-900">Base documents provided</h3>
                 <p className="mt-0.5 text-[11px] text-zinc-500">Tick each item received and choose its supporting document.</p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-3">
                 <ChecklistDocument
                   id="cv-resume"
                   label="CV / résumé"
@@ -211,7 +211,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
               </div>
             </section>
 
-            <section className="grid gap-3 border-t border-zinc-200 pt-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:items-end">
+            <section className="grid gap-2.5 border-t border-zinc-200 pt-2.5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:items-end">
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="sharepoint-repository"

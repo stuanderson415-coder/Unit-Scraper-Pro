@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ClipboardCheck, FileCheck2 } from 'lucide-react';
 import { useLookupUnit, type UnitOfCompetency } from '@workspace/api-client-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { HistorySidebar } from '@/components/layout/history-sidebar';
@@ -31,7 +30,7 @@ function WelcomePanel() {
   ];
 
   return (
-    <section className="rounded-2xl border border-teal-200 bg-white p-5 shadow-sm md:p-6">
+    <section className="rounded-xl border border-teal-200 bg-white p-4 shadow-sm md:p-5">
       <div className="flex items-start gap-3">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
           <ClipboardCheck className="h-5 w-5" />
@@ -45,12 +44,12 @@ function WelcomePanel() {
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
+      <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)]">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-zinc-700">Follow these steps</h3>
-          <ol className="mt-2 grid gap-1.5 sm:grid-cols-2">
+           <ol className="mt-2 grid gap-1 sm:grid-cols-2">
             {steps.map((step, index) => (
-              <li key={step} className="flex gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-2 text-xs leading-4 text-zinc-700">
+              <li key={step} className="flex gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-1.5 text-xs leading-4 text-zinc-700">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-600 text-[11px] font-bold text-white">{index + 1}</span>
                 <span>{step}</span>
               </li>
@@ -114,16 +113,16 @@ export default function Home() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 h-[4.5rem] border-b border-[#26364d] bg-[#122238] text-white shadow-md">
-        <div className="flex h-full w-full items-center justify-between gap-4 px-5 md:px-10">
+      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-[#26364d] bg-[#122238] text-white shadow-md">
+        <div className="flex h-full w-full items-center justify-between gap-3 px-4 md:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <img
               src="/rpl-companion-logo.png"
               alt="RPL Companion logo"
-              className="h-12 w-[78px] shrink-0 object-contain brightness-0 invert"
+              className="h-10 w-[66px] shrink-0 object-contain brightness-0 invert"
             />
             <div className="min-w-0">
-              <h1 className="truncate text-lg font-bold tracking-tight sm:text-xl">RPL Companion</h1>
+              <h1 className="truncate text-base font-bold tracking-tight sm:text-lg">RPL Companion</h1>
               <p className="hidden truncate text-xs text-slate-300 sm:block">Recognition of Prior Learning workspace</p>
             </div>
           </div>
@@ -145,12 +144,12 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="mt-[4.5rem] flex h-[calc(100vh-4.5rem)] w-full overflow-hidden bg-zinc-300 font-sans">
+      <div className="mt-16 flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-zinc-300 font-sans">
         <HistorySidebar onSelect={handleHistorySelect} />
 
-        <main className="flex-1 flex flex-col h-full relative">
-          <ScrollArea className="flex-1 h-full">
-            <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-8 pb-24">
+        <main className="relative flex h-full min-w-0 flex-1 flex-col">
+          <div className="h-full min-w-0 flex-1 overflow-y-auto">
+            <div className="mx-auto w-full max-w-7xl space-y-5 p-4 pb-16 md:p-6 md:pb-20">
 
               {!currentUnit && (
                 <>
@@ -160,22 +159,22 @@ export default function Home() {
               )}
 
               {lookupUnit.isPending ? (
-                <div className="space-y-6 mt-10">
-                  <div className="flex gap-4 mb-8">
+                 <div className="mt-6 space-y-4">
+                   <div className="mb-5 flex gap-3">
                     <Skeleton className="h-16 w-48 rounded-lg" />
                     <div className="space-y-2">
                       <Skeleton className="h-6 w-32" />
                       <Skeleton className="h-4 w-24" />
                     </div>
                   </div>
-                  <Skeleton className="h-[500px] w-full rounded-xl" />
+                   <Skeleton className="h-[420px] w-full rounded-xl" />
                 </div>
               ) : currentUnit ? (
-                <div className="mt-10">
+                 <div className="mt-2">
                   {workspaceMode === 'rpl'
                     ? <RplWorkflow key={`${currentUnit.code}:${selectedRplStudent ?? intakeDetails?.studentNumber ?? 'last'}`} unit={currentUnit} studentNumber={selectedRplStudent} prefill={intakeDetails} onOpenAssessmentMapping={() => setWorkspaceMode('assessment')} />
-                    : <div className="space-y-5">
-                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm">
+                     : <div className="space-y-4">
+                       <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
                         <div>
                           <p className="font-mono text-xs font-bold text-zinc-500">{currentUnit.code}</p>
                           <p className="mt-0.5 text-sm font-semibold text-zinc-900">{currentUnit.title}</p>
@@ -187,7 +186,7 @@ export default function Home() {
                 </div>
               ) : null}
             </div>
-          </ScrollArea>
+          </div>
         </main>
       </div>
     </>

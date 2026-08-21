@@ -91,7 +91,7 @@ export function exportRplToWord(unit: UnitOfCompetency, record: RplRecord) {
 <tr><th>Student name</th><td>${esc(record.student.name) || '&nbsp;'}</td></tr>
 <tr><th>Student number</th><td>${esc(record.student.studentNumber) || '&nbsp;'}</td></tr>
 <tr><th>Trainer / assessor</th><td>${esc(record.student.trainerName) || '&nbsp;'}</td></tr>
-<tr><th>Organisation / RTO</th><td>${esc(record.student.organisation) || '&nbsp;'}</td></tr>
+<tr><th>Parent Qualification</th><td>${esc(record.student.organisation) || '&nbsp;'}</td></tr>
 <tr><th>Assessment date</th><td>${esc(record.student.assessmentDate) || today}</td></tr>
 </table>
 <h2>Evidence log</h2>
