@@ -75,7 +75,14 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
 
   const handleCodeSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!code.trim() || !hasRequiredIntake) return;
+    if (!intake.name.trim() || !intake.studentNumber.trim() || !code.trim()) {
+      toast({
+        title: 'Complete the required fields',
+        description: 'Enter the student name, student number, and unit code before selecting Start.',
+        variant: 'destructive',
+      });
+      return;
+    }
     lookupUnit.mutate(
       { data: { unitCode: code.trim() } },
       {
@@ -135,7 +142,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
             <Input placeholder="e.g. CHCCCS007" value={code} onChange={event => setCode(event.target.value.toUpperCase())} className="font-mono" disabled={loading} />
           </label>
           <div className="flex items-end lg:col-span-1">
-            <Button type="submit" disabled={!code.trim() || !hasRequiredIntake || loading} className="h-9 w-full px-2 text-xs bg-teal-600 hover:bg-teal-700">
+            <Button type="submit" disabled={loading} className="h-9 w-full px-2 text-xs bg-teal-600 hover:bg-teal-700">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Start
             </Button>
