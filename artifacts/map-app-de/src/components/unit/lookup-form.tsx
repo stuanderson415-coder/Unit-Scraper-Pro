@@ -135,7 +135,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
             <Input placeholder="e.g. CHCCCS007" value={code} onChange={event => setCode(event.target.value.toUpperCase())} className="font-mono" disabled={loading} />
           </label>
           <div className="flex items-end lg:col-span-1">
-            <Button type="submit" disabled={!code.trim() || !hasRequiredIntake || loading} className="w-full bg-teal-600 hover:bg-teal-700">
+            <Button type="submit" disabled={!code.trim() || !hasRequiredIntake || loading} className="h-9 w-full px-2 text-xs bg-teal-600 hover:bg-teal-700">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Start RPL Assessment
             </Button>
@@ -143,9 +143,10 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
         </form>
 
         <details className="mt-4 border-t border-zinc-100 pt-2">
-          <summary className="cursor-pointer text-[11px] font-medium text-zinc-500 hover:text-zinc-800">Other options: Pre-RPL checklist</summary>
+          <summary className="cursor-pointer text-[11px] font-medium text-zinc-500 hover:text-zinc-800">Pre-RPL Interview</summary>
           <div className="mt-2 space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <section className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
+            <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-teal-800">RPL Pre-Assessment</h3>
+            <section className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="pre-rpl-interview"
@@ -153,7 +154,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
                   onCheckedChange={value => updateChecklist({ interviewCompleted: value === true })}
                   disabled={loading}
                 />
-                <label htmlFor="pre-rpl-interview" className="cursor-pointer text-xs font-semibold text-zinc-800">Pre-RPL interview completed</label>
+                <label htmlFor="pre-rpl-interview" className="cursor-pointer text-[11px] font-semibold text-zinc-800">Pre-RPL interview completed</label>
               </div>
               <label className="grid gap-1">
                 <span className="text-[11px] font-semibold text-zinc-700">Interview date</span>
