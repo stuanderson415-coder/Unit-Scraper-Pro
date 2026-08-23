@@ -128,8 +128,8 @@ export default function Home() {
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <div className="hidden items-center gap-2 md:flex">
-              <a href="https://www.gnu.org/licenses/gpl-3.0.en.html" target="_blank" rel="noopener noreferrer">
-                <img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg" alt="License: GPL v3" className="h-5" />
+              <a href="https://opensource.org/license/mit/" target="_blank" rel="noopener noreferrer">
+                <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT" className="h-5" />
               </a>
               <a href="https://github.com/stuanderson415-coder/map-app" target="_blank" rel="noopener noreferrer">
                 <img src="https://img.shields.io/badge/Source-GitHub-181717?logo=github" alt="Source on GitHub" className="h-5" />
