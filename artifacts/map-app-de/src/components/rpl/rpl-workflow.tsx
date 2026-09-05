@@ -38,9 +38,9 @@ import {
   studentDisplayName,
 } from '@/lib/rpl-state';
 
-type Stage = 'student' | 'evidence' | 'mapping' | 'gaps' | 'review' | 'final';
+export type RplStage = 'student' | 'evidence' | 'mapping' | 'gaps' | 'review' | 'final';
 
-const STAGES: Array<{ id: Stage; label: string; short: string; icon: typeof UserRound }> = [
+const STAGES: Array<{ id: RplStage; label: string; short: string; icon: typeof UserRound }> = [
   { id: 'student', label: 'Student details', short: 'Student', icon: UserRound },
   { id: 'evidence', label: 'Evidence log', short: 'Evidence', icon: ListPlus },
   { id: 'mapping', label: 'RPL mapping', short: 'Mapping', icon: GripVertical },
@@ -151,7 +151,7 @@ function withPreRplEvidence(current: RplRecord): RplRecord {
   return additions.length ? { ...current, evidence: [...current.evidence, ...additions] } : current;
 }
 
-export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapping }: { unit: UnitOfCompetency; studentNumber?: string; prefill?: StudentDetails; onOpenAssessmentMapping?: () => void }) {
+export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'student', onOpenAssessmentMapping }: { unit: UnitOfCompetency; studentNumber?: string; prefill?: StudentDetails; initialStage?: RplStage; onOpenAssessmentMapping?: () => void }) {
   const hasPrefill = Boolean(prefill?.surname || prefill?.givenNames || prefill?.studentNumber);
   const [record, setRecord] = useState<RplRecord>(() => {
     const loaded = studentNumber
@@ -167,7 +167,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   );
   const [savedStudents, setSavedStudents] = useState<StudentRecordSummary[]>(() => listRplStudents(unit.code));
   const [recordConflict, setRecordConflict] = useState<string | null>(null);
-  const [stage, setStage] = useState<Stage>('student');
+  const [stage, setStage] = useState<RplStage>(initialStage);
   const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(null);
   const [dragEvidenceId, setDragEvidenceId] = useState<string | null>(null);
   const [dragTargetRowKey, setDragTargetRowKey] = useState<string | null>(null);
@@ -183,6 +183,10 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
       setSavedStudents(listRplStudents(unit.code));
     }
   }, [activeRecordStudentNumber, record, unit.code]);
+
+  useEffect(() => {
+    if (import.meta.env.DEV) setStage(initialStage);
+  }, [initialStage]);
 
   const rows = useMemo(() => buildRows(unit), [unit]);
   const requirementRows = useMemo(
@@ -761,7 +765,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
     </div>
   );
 
-  const stageContent: Record<Stage, () => ReactElement> = {
+  const stageContent: Record<RplStage, () => ReactElement> = {
     student: renderStudent,
     evidence: renderEvidence,
     mapping: renderMapping,

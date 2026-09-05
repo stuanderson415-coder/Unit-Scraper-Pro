@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { HistorySidebar } from '@/components/layout/history-sidebar';
 import { LookupForm } from '@/components/unit/lookup-form';
-import { RplWorkflow } from '@/components/rpl/rpl-workflow';
+import { RplWorkflow, type RplStage } from '@/components/rpl/rpl-workflow';
 import { UnitDisplay } from '@/components/unit/unit-display';
 import type { StudentDetails } from '@/lib/rpl-state';
 
@@ -78,6 +78,7 @@ export default function Home() {
   const [workspaceMode, setWorkspaceMode] = useState<'rpl' | 'assessment'>('rpl');
   const [selectedRplStudent, setSelectedRplStudent] = useState<string | undefined>();
   const [intakeDetails, setIntakeDetails] = useState<StudentDetails | undefined>();
+  const [devPreviewStage, setDevPreviewStage] = useState<RplStage>('student');
 
   const setNumTasks = (n: number) => {
     setNumTasksRaw(n);
@@ -109,6 +110,44 @@ export default function Home() {
     setCurrentUnit(null);
     setSelectedRplStudent(undefined);
     setIntakeDetails(undefined);
+  };
+
+  const openDevPreview = (stage: 'intake' | RplStage) => {
+    if (stage === 'intake') {
+      startAnotherRpl();
+      return;
+    }
+    setDevPreviewStage(stage);
+    const previewStudent: StudentDetails = {
+      surname: 'Preview',
+      givenNames: 'Developer',
+      studentNumber: 'DEV-PREVIEW',
+      trainerName: 'Preview Assessor',
+      organisation: 'Preview Qualification',
+      assessmentDate: new Date().toLocaleDateString('en-CA'),
+      preRplChecklist: {
+        interviewCompleted: true,
+        interviewDate: new Date().toLocaleDateString('en-CA'),
+        cvResumeProvided: true,
+        cvResumeFileName: 'preview-cv.pdf',
+        academicTranscriptProvided: true,
+        academicTranscriptFileName: 'preview-transcript.pdf',
+        positionDescriptionProvided: true,
+        positionDescriptionFileName: 'preview-position-description.pdf',
+        sharePointRepositoryCreated: false,
+        sharePointPath: '',
+      },
+    };
+    if (currentUnit) {
+      setSelectedRplStudent(undefined);
+      setIntakeDetails(previewStudent);
+      setWorkspaceMode('rpl');
+      return;
+    }
+    lookupUnit.mutate({ data: { unitCode: 'CHCAOD001' } }, {
+      onSuccess: unit => handleUnitLoaded(unit, previewStudent),
+      onError: () => toast({ title: 'Preview unavailable', description: 'Could not load the developer preview unit.', variant: 'destructive' }),
+    });
   };
 
   return (
@@ -148,6 +187,30 @@ export default function Home() {
         <HistorySidebar onSelect={handleHistorySelect} />
 
         <main className="relative flex h-full min-w-0 flex-1 flex-col">
+          {import.meta.env.DEV && (
+            <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-amber-300 bg-amber-50 px-3 py-1.5 text-xs text-amber-950">
+              <span className="mr-1 font-bold uppercase tracking-wide">Developer preview</span>
+              {([
+                ['intake', 'Intake'],
+                ['student', 'Student'],
+                ['evidence', 'Evidence'],
+                ['mapping', 'Mapping'],
+                ['gaps', 'Gaps'],
+                ['review', 'Review'],
+                ['final', 'Outcome'],
+              ] as const).map(([stage, label]) => (
+                <button
+                  key={stage}
+                  type="button"
+                  onClick={() => openDevPreview(stage)}
+                  className="rounded border border-amber-300 bg-white px-2 py-1 font-medium transition hover:border-amber-500 hover:bg-amber-100"
+                >
+                  {label}
+                </button>
+              ))}
+              <span className="ml-1 text-[10px] text-amber-700">Development only — hidden from published builds</span>
+            </div>
+          )}
           <div className="h-full min-w-0 flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-7xl space-y-5 p-4 pb-16 md:p-6 md:pb-20">
 
@@ -172,7 +235,7 @@ export default function Home() {
               ) : currentUnit ? (
                  <div className="mt-2">
                   {workspaceMode === 'rpl'
-                    ? <RplWorkflow key={`${currentUnit.code}:${selectedRplStudent ?? intakeDetails?.studentNumber ?? 'last'}`} unit={currentUnit} studentNumber={selectedRplStudent} prefill={intakeDetails} onOpenAssessmentMapping={() => setWorkspaceMode('assessment')} />
+                    ? <RplWorkflow key={`${currentUnit.code}:${selectedRplStudent ?? intakeDetails?.studentNumber ?? 'last'}`} unit={currentUnit} studentNumber={selectedRplStudent} prefill={intakeDetails} initialStage={devPreviewStage} onOpenAssessmentMapping={() => setWorkspaceMode('assessment')} />
                      : <div className="space-y-4">
                        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 shadow-sm">
                         <div>
