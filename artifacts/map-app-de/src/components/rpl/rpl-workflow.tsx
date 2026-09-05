@@ -46,7 +46,7 @@ const STAGES: Array<{ id: Stage; label: string; short: string; icon: typeof User
   { id: 'mapping', label: 'RPL mapping', short: 'Mapping', icon: GripVertical },
   { id: 'gaps', label: 'Gaps interview', short: 'Gaps', icon: MessageSquareText },
   { id: 'review', label: 'Review', short: 'Review', icon: ClipboardCheck },
-  { id: 'final', label: 'Final RPL mapping', short: 'Final', icon: FileCheck2 },
+  { id: 'final', label: 'Outcome & sign-off', short: 'Outcome', icon: FileCheck2 },
 ];
 
 type NewEvidenceDraft = Omit<EvidenceItem, 'id'>;
@@ -173,6 +173,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   const [dragTargetRowKey, setDragTargetRowKey] = useState<string | null>(null);
   const [newEvidence, setNewEvidence] = useState(DEFAULT_NEW_EVIDENCE);
   const [exported, setExported] = useState(false);
+  const [savedFeedback, setSavedFeedback] = useState(false);
   const paletteRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -268,6 +269,16 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
     setStage(STAGES[Math.min(stageIndex + 1, STAGES.length - 1)].id);
   };
   const goPrevious = () => setStage(STAGES[Math.max(stageIndex - 1, 0)].id);
+  const devSkip = (direction: -1 | 1) => {
+    setStage(STAGES[Math.max(0, Math.min(stageIndex + direction, STAGES.length - 1))].id);
+  };
+
+  const saveProgress = () => {
+    persistRplRecord(unit.code, record, activeRecordStudentNumber === 'draft' ? '' : activeRecordStudentNumber);
+    setSavedStudents(listRplStudents(unit.code));
+    setSavedFeedback(true);
+    window.setTimeout(() => setSavedFeedback(false), 1600);
+  };
 
   const onDrop = (rowKey: string) => {
     const evidenceId = dragEvidenceId ?? selectedEvidenceId;
@@ -679,10 +690,34 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
     <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
       <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
         <p className="text-sm font-semibold text-teal-800">Final output</p>
-        <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Final RPL mapping</h2>
+        <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">RPL outcome and sign-off</h2>
         <p className="mt-2 max-w-2xl text-sm leading-5 text-zinc-600">
-           Download a landscape Word document containing the student details, evidence log, mapping matrix, interview records and printable student/assessor signature boxes.
+           Record the assessment outcome, complete the digital declarations, then download the final landscape Word report.
         </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-[220px_1fr]">
+          <label className="grid gap-1">
+            <span className="text-xs font-bold uppercase tracking-[0.1em] text-zinc-600">RPL outcome</span>
+            <select
+              value={record.finalisation.outcome}
+              onChange={event => updateRecord(current => ({ ...current, finalisation: { ...current.finalisation, outcome: event.target.value as typeof current.finalisation.outcome } }))}
+              className="h-10 rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            >
+              <option value="pending">Decision pending</option>
+              <option value="full-rpl">Full RPL granted</option>
+              <option value="partial-rpl">Partial RPL granted</option>
+              <option value="not-granted">RPL not granted</option>
+            </select>
+          </label>
+          <label className="grid gap-1">
+            <span className="text-xs font-bold uppercase tracking-[0.1em] text-zinc-600">Outcome notes / conditions</span>
+            <input
+              value={record.finalisation.outcomeNotes}
+              onChange={event => updateRecord(current => ({ ...current, finalisation: { ...current.finalisation, outcomeNotes: event.target.value } }))}
+              placeholder="Record the decision rationale, partial-RPL conditions, or next steps"
+              className="h-10 rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            />
+          </label>
+        </div>
         <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
           <div className="grid gap-2 sm:grid-cols-2">
              <span><strong>Student:</strong> {studentName || 'Not recorded'}</span>
@@ -694,23 +729,29 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
           </div>
         </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          {['Student', 'Assessor'].map(role => (
-            <div key={role} className="rounded-lg border border-teal-200 bg-teal-50/60 p-3 text-xs text-zinc-700">
-              <p className="font-semibold text-teal-900">{role} declaration</p>
-              <div className="mt-5 border-b border-zinc-500 pb-1">Signature</div>
-              <div className="mt-3 border-b border-zinc-500 pb-1">Date (DD/MM/YYYY)</div>
-            </div>
-          ))}
+          <div className="rounded-lg border border-teal-200 bg-teal-50/60 p-3 text-xs text-zinc-700">
+            <p className="font-semibold text-teal-900">Student digital declaration</p>
+            <p className="mt-1 text-[11px]">Typing the name below confirms the evidence and responses belong to the student.</p>
+            <input value={record.finalisation.studentSignature} onChange={event => updateRecord(current => ({ ...current, finalisation: { ...current.finalisation, studentSignature: event.target.value } }))} placeholder="Student full name" className="mt-3 h-9 w-full rounded-md border border-teal-200 bg-white px-2.5 text-sm outline-none focus:border-teal-700" />
+            <DatePickerInput value={record.finalisation.studentSignatureDate} onChange={studentSignatureDate => updateRecord(current => ({ ...current, finalisation: { ...current.finalisation, studentSignatureDate } }))} ariaLabel="Student signature date" className="mt-2 h-9" />
+          </div>
+          <div className="rounded-lg border border-teal-200 bg-teal-50/60 p-3 text-xs text-zinc-700">
+            <p className="font-semibold text-teal-900">Assessor digital declaration</p>
+            <p className="mt-1 text-[11px]">Typing the name below confirms the assessment has been reviewed and finalised.</p>
+            <input value={record.finalisation.assessorSignature} onChange={event => updateRecord(current => ({ ...current, finalisation: { ...current.finalisation, assessorSignature: event.target.value } }))} placeholder="Assessor full name" className="mt-3 h-9 w-full rounded-md border border-teal-200 bg-white px-2.5 text-sm outline-none focus:border-teal-700" />
+            <DatePickerInput value={record.finalisation.assessorSignatureDate} onChange={assessorSignatureDate => updateRecord(current => ({ ...current, finalisation: { ...current.finalisation, assessorSignatureDate } }))} ariaLabel="Assessor signature date" className="mt-2 h-9" />
+          </div>
         </div>
         <Button
           onClick={async () => { await exportRplToWord(unit, record); setExported(true); }}
-          disabled={!hasStudent}
+          disabled={!hasStudent || record.finalisation.outcome === 'pending'}
            className="mt-4 bg-teal-800 hover:bg-teal-700"
         >
           {exported ? <Check className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
           {exported ? 'Downloaded RPL mapping' : 'Download landscape Word document'}
         </Button>
         {!hasStudent && <p className="mt-2 text-xs text-rose-700">Add the student name and student number before finalising.</p>}
+        {hasStudent && record.finalisation.outcome === 'pending' && <p className="mt-2 text-xs text-amber-700">Select the final RPL outcome before downloading the report.</p>}
       </section>
       <aside className="rounded-xl border border-teal-900 bg-teal-950 p-4 text-teal-50 shadow-sm">
         <FileCheck2 className="h-7 w-7 text-teal-300" />
@@ -740,6 +781,13 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
            <h1 className="mt-1 text-base font-bold text-zinc-900">{unit.title}</h1>
         </div>
         <div className="flex items-center gap-3 text-right text-xs leading-5 text-zinc-500">
+          {import.meta.env.DEV && (
+            <div className="flex items-center gap-1 rounded-md border border-dashed border-amber-400 bg-amber-50 p-1 text-amber-900" title="Development-only stage navigation">
+              <span className="px-1 text-[10px] font-bold uppercase">Dev</span>
+              <button type="button" onClick={() => devSkip(-1)} disabled={stageIndex === 0} className="rounded p-1 hover:bg-amber-100 disabled:opacity-30" aria-label="Developer: previous stage"><ArrowLeft className="h-3.5 w-3.5" /></button>
+              <button type="button" onClick={() => devSkip(1)} disabled={stageIndex === STAGES.length - 1} className="rounded p-1 hover:bg-amber-100 disabled:opacity-30" aria-label="Developer: next stage"><ArrowRight className="h-3.5 w-3.5" /></button>
+            </div>
+          )}
           <div>
             <span className="block font-semibold text-zinc-700">{studentName || 'No student selected'}</span>
             <span>{record.student.studentNumber || 'Student number required'}</span>
@@ -781,7 +829,13 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
         <Button variant="outline" onClick={goPrevious} disabled={stageIndex === 0}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Previous
         </Button>
-        <span className="text-xs font-medium text-zinc-500">Step {stageIndex + 1} of {STAGES.length}</span>
+        <div className="flex items-center gap-2">
+          <Button type="button" variant="outline" onClick={saveProgress} className="border-teal-300 text-teal-800 hover:bg-teal-50">
+            {savedFeedback ? <Check className="mr-2 h-4 w-4" /> : null}
+            {savedFeedback ? 'Saved' : 'Save progress'}
+          </Button>
+          <span className="hidden text-xs font-medium text-zinc-500 sm:inline">Step {stageIndex + 1} of {STAGES.length}</span>
+        </div>
         <Button onClick={goNext} disabled={stageIndex === STAGES.length - 1 || (stage === 'student' && !hasStudent)} className="bg-zinc-900 hover:bg-zinc-700">
           Next <ArrowRight className="ml-2 h-4 w-4" />
         </Button>

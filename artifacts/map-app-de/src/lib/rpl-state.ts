@@ -87,11 +87,34 @@ export type InterviewRecord = {
   outcome: InterviewOutcome;
 };
 
+export type RplOutcome = 'pending' | 'full-rpl' | 'partial-rpl' | 'not-granted';
+
+export type RplFinalisation = {
+  outcome: RplOutcome;
+  outcomeNotes: string;
+  studentSignature: string;
+  studentSignatureDate: string;
+  assessorSignature: string;
+  assessorSignatureDate: string;
+};
+
+export function createEmptyRplFinalisation(): RplFinalisation {
+  return {
+    outcome: 'pending',
+    outcomeNotes: '',
+    studentSignature: '',
+    studentSignatureDate: '',
+    assessorSignature: '',
+    assessorSignatureDate: '',
+  };
+}
+
 export type RplRecord = {
   student: StudentDetails;
   evidence: EvidenceItem[];
   mappings: Record<string, string[]>;
   interviews: Record<string, InterviewRecord>;
+  finalisation: RplFinalisation;
 };
 
 export type StudentRecordSummary = StudentDetails & {
@@ -116,6 +139,7 @@ export function createEmptyRplRecord(): RplRecord {
     evidence: [],
     mappings: {},
     interviews: {},
+    finalisation: createEmptyRplFinalisation(),
   };
 }
 
@@ -177,6 +201,10 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
       })),
       mappings: parsed.mappings ?? {},
       interviews: parsed.interviews ?? {},
+      finalisation: {
+        ...createEmptyRplFinalisation(),
+        ...parsed.finalisation,
+      },
     };
   } catch {
     return createEmptyRplRecord();

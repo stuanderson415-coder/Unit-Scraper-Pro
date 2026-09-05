@@ -77,6 +77,13 @@ function formatDate(value: string) {
   return year && month && day ? `${day}/${month}/${year}` : value;
 }
 
+function outcomeLabel(outcome: RplRecord['finalisation']['outcome']) {
+  if (outcome === 'full-rpl') return 'Full RPL granted';
+  if (outcome === 'partial-rpl') return 'Partial RPL granted';
+  if (outcome === 'not-granted') return 'RPL not granted';
+  return 'Decision pending';
+}
+
 export async function exportRplToWord(unit: UnitOfCompetency, record: RplRecord) {
   const detailWidths = [4000, PAGE_WIDTH - 4000];
   const details = [
@@ -86,6 +93,8 @@ export async function exportRplToWord(unit: UnitOfCompetency, record: RplRecord)
     ['Trainer / assessor', record.student.trainerName],
     ['Parent Qualification', record.student.organisation],
     ['Assessment date', formatDate(record.student.assessmentDate)],
+    ['RPL outcome', outcomeLabel(record.finalisation.outcome)],
+    ['Outcome notes / conditions', record.finalisation.outcomeNotes],
   ];
 
   const evidenceWidths = [1200, 2500, 3100, PAGE_WIDTH - 6800];
@@ -146,7 +155,10 @@ export async function exportRplToWord(unit: UnitOfCompetency, record: RplRecord)
     }))
     : [new TableRow({ children: [cell('No interview or oral-question records were added.', undefined, { span: 4 })] })];
 
-  const signatureBlank = '\n\nSignature: ____________________________________\n\nDate (DD/MM/YYYY): ____________________________';
+  const studentSignature = record.finalisation.studentSignature || '____________________________________';
+  const assessorSignature = record.finalisation.assessorSignature || record.student.trainerName || '____________________________________';
+  const studentSignatureDate = formatDate(record.finalisation.studentSignatureDate) || '________________';
+  const assessorSignatureDate = formatDate(record.finalisation.assessorSignatureDate) || '________________';
   const doc = new Document({
     creator: 'RPL Companion',
     description: 'Recognition of Prior Learning assessment record',
@@ -183,8 +195,8 @@ export async function exportRplToWord(unit: UnitOfCompetency, record: RplRecord)
         table([
           new TableRow({ children: [cell('Student declaration', PAGE_WIDTH / 2, { bold: true, fill: 'CCFBF1' }), cell('Assessor declaration', PAGE_WIDTH / 2, { bold: true, fill: 'CCFBF1' })] }),
           new TableRow({ children: [
-            cell(`I confirm the evidence and responses provided are my own.${signatureBlank}`, PAGE_WIDTH / 2),
-            cell(`I confirm this RPL assessment has been reviewed against the unit requirements.\n\nName: ${record.student.trainerName || '____________________________________'}${signatureBlank}`, PAGE_WIDTH / 2),
+            cell(`I confirm the evidence and responses provided are my own.\n\nDigitally signed by: ${studentSignature}\n\nDate (DD/MM/YYYY): ${studentSignatureDate}`, PAGE_WIDTH / 2),
+            cell(`I confirm this RPL assessment has been reviewed and finalised against the unit requirements.\n\nDigitally signed by: ${assessorSignature}\n\nDate (DD/MM/YYYY): ${assessorSignatureDate}`, PAGE_WIDTH / 2),
           ] }),
         ], [PAGE_WIDTH / 2, PAGE_WIDTH / 2]),
       ],
