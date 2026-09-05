@@ -16,7 +16,7 @@ import {
 import { saveAs } from 'file-saver';
 import type { UnitOfCompetency } from '@workspace/api-client-react';
 import { buildRows } from './unit-rows';
-import { EVIDENCE_TYPES, evidenceCode, studentDisplayName, type RplRecord } from './rpl-state';
+import { EVIDENCE_CLASSIFICATIONS, EVIDENCE_TYPES, evidenceCode, studentDisplayName, type RplRecord } from './rpl-state';
 
 const PAGE_WIDTH = 15138;
 const MARGIN = 720;
@@ -84,6 +84,14 @@ function outcomeLabel(outcome: RplRecord['finalisation']['outcome']) {
   return 'Decision pending';
 }
 
+function evidenceSubtypeName(value: string) {
+  for (const group of EVIDENCE_CLASSIFICATIONS) {
+    const subtype = group.subtypes.find(option => option.value === value);
+    if (subtype) return subtype.name;
+  }
+  return value;
+}
+
 export async function exportRplToWord(unit: UnitOfCompetency, record: RplRecord) {
   const detailWidths = [4000, PAGE_WIDTH - 4000];
   const details = [
@@ -97,17 +105,21 @@ export async function exportRplToWord(unit: UnitOfCompetency, record: RplRecord)
     ['Outcome notes / conditions', record.finalisation.outcomeNotes],
   ];
 
-  const evidenceWidths = [1200, 2500, 3100, PAGE_WIDTH - 6800];
+  const evidenceWidths = [900, 1900, 2500, 3000, PAGE_WIDTH - 8300];
   const evidenceRows = record.evidence.length
     ? record.evidence.map((item, index) => new TableRow({
       children: [
         cell(evidenceCode(index), evidenceWidths[0]),
         cell(EVIDENCE_TYPES.find(type => type.value === item.type)?.name ?? 'Reports', evidenceWidths[1]),
-        cell(`${item.title}${item.reference ? `\n${item.reference}` : ''}`, evidenceWidths[2]),
-        cell(item.notes, evidenceWidths[3]),
+        cell([
+          item.classifications.map(value => EVIDENCE_CLASSIFICATIONS.find(group => group.value === value)?.name).filter(Boolean).join(', '),
+          item.subtypes.map(evidenceSubtypeName).join(', '),
+        ].filter(Boolean).join('\n'), evidenceWidths[2]),
+        cell(`${item.title}${item.reference ? `\n${item.reference}` : ''}`, evidenceWidths[3]),
+        cell(item.notes, evidenceWidths[4]),
       ],
     }))
-    : [new TableRow({ children: [cell('No evidence items logged.', undefined, { span: 4 })] })];
+    : [new TableRow({ children: [cell('No evidence items logged.', undefined, { span: 5 })] })];
 
   const mappingWidths = [7000, 4400, PAGE_WIDTH - 11400];
   const evidenceById = new Map(record.evidence.map((item, index) => [item.id, `${evidenceCode(index)} — ${item.title}`]));
@@ -178,7 +190,7 @@ export async function exportRplToWord(unit: UnitOfCompetency, record: RplRecord)
         table(details.map(([label, value]) => new TableRow({ children: [cell(label, detailWidths[0], { bold: true, fill: 'E2E8F0' }), cell(value, detailWidths[1])] })), detailWidths),
         heading('Evidence log'),
         table([
-          new TableRow({ tableHeader: true, children: ['Code', 'Document type', 'Evidence piece / reference', 'Assessor notes'].map((label, index) => cell(label, evidenceWidths[index], { bold: true, fill: 'CCFBF1' })) }),
+          new TableRow({ tableHeader: true, children: ['Code', 'Document type', 'Evidence class / subtype', 'Evidence piece / reference', 'Assessor notes'].map((label, index) => cell(label, evidenceWidths[index], { bold: true, fill: 'CCFBF1' })) }),
           ...evidenceRows,
         ], evidenceWidths),
         heading('RPL evidence mapping'),

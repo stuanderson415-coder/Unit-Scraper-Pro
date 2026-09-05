@@ -12,6 +12,43 @@ export const EVIDENCE_TYPES = [
 
 export type EvidenceType = typeof EVIDENCE_TYPES[number]['value'];
 
+export const EVIDENCE_CLASSIFICATIONS = [
+  {
+    value: 'direct',
+    name: 'Direct',
+    description: 'Observed, witnessed, or discussed with the assessor in real time',
+    subtypes: [
+      { value: 'observation-performance', name: 'Observation of performance' },
+      { value: 'demonstration-presentation', name: 'Demonstration or presentation' },
+      { value: 'oral-questioning', name: 'Oral questioning or interview' },
+      { value: 'role-play-challenge-test', name: 'Role-play or challenge test' },
+    ],
+  },
+  {
+    value: 'indirect',
+    name: 'Indirect',
+    description: 'Student work or submissions reviewed after completion',
+    subtypes: [
+      { value: 'work-sample-portfolio', name: 'Work sample or portfolio' },
+      { value: 'written-assignment-project', name: 'Written assignment or project' },
+      { value: 'test-quiz-exam', name: 'Test, quiz, or examination' },
+    ],
+  },
+  {
+    value: 'supplementary',
+    name: 'Supplementary',
+    description: 'Supporting evidence supplied or gathered by another party',
+    subtypes: [
+      { value: 'supervisor-third-party-report', name: 'Supervisor or third-party report' },
+      { value: 'employer-testimonial-reference', name: 'Employer testimonial or reference' },
+      { value: 'logbook', name: 'Logbook' },
+    ],
+  },
+] as const;
+
+export type EvidenceClassification = typeof EVIDENCE_CLASSIFICATIONS[number]['value'];
+export type EvidenceSubtype = typeof EVIDENCE_CLASSIFICATIONS[number]['subtypes'][number]['value'];
+
 const LEGACY_EVIDENCE_TYPE_BY_COLOUR: Record<string, EvidenceType> = {
   '#0f766e': 'support-letter',
   '#4338ca': 'third-party-report',
@@ -77,6 +114,8 @@ export type EvidenceItem = {
   reference: string;
   notes: string;
   type: EvidenceType;
+  classifications: EvidenceClassification[];
+  subtypes: EvidenceSubtype[];
   sourceKey?: 'pre-rpl-cv' | 'pre-rpl-transcript' | 'pre-rpl-position-description';
 };
 
@@ -197,6 +236,8 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
         reference: item.reference ?? '',
         notes: item.notes ?? '',
         type: migrateEvidenceType(item.type, item.color),
+        classifications: item.classifications ?? [],
+        subtypes: item.subtypes ?? [],
         sourceKey: item.sourceKey,
       })),
       mappings: parsed.mappings ?? {},

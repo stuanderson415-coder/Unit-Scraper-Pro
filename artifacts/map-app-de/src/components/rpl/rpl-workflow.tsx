@@ -21,6 +21,7 @@ import { buildRows } from '@/lib/unit-rows';
 import { exportRplToWord } from '@/lib/export-rpl-doc';
 import {
   EVIDENCE_TYPES,
+  EVIDENCE_CLASSIFICATIONS,
   createEmptyRplRecord,
   evidenceCode,
   hasRplRecord,
@@ -30,6 +31,8 @@ import {
   newEvidenceId,
   persistRplRecord,
   type EvidenceItem,
+  type EvidenceClassification,
+  type EvidenceSubtype,
   type InterviewOutcome,
   type InterviewRecord,
   type RplRecord,
@@ -56,6 +59,8 @@ const DEFAULT_NEW_EVIDENCE: NewEvidenceDraft = {
   reference: '',
   notes: '',
   type: EVIDENCE_TYPES[0].value,
+  classifications: [],
+  subtypes: [],
 };
 
 function statusForOutcome(outcome: InterviewOutcome) {
@@ -131,6 +136,60 @@ function FieldLabel({ children }: { children: string }) {
   return <label className="mb-1 block text-xs font-bold uppercase tracking-[0.11em] text-zinc-600">{children}</label>;
 }
 
+function EvidenceClassificationFields({
+  classifications,
+  subtypes,
+  onChange,
+  compact = false,
+}: {
+  classifications: EvidenceClassification[];
+  subtypes: EvidenceSubtype[];
+  onChange: (patch: Pick<EvidenceItem, 'classifications' | 'subtypes'>) => void;
+  compact?: boolean;
+}) {
+  const toggleClassification = (classification: EvidenceClassification) => {
+    const selected = classifications.includes(classification)
+      ? classifications.filter(item => item !== classification)
+      : [...classifications, classification];
+    const allowedSubtypes = new Set(
+      EVIDENCE_CLASSIFICATIONS
+        .filter(group => selected.includes(group.value))
+        .flatMap(group => group.subtypes.map(subtype => subtype.value)),
+    );
+    onChange({ classifications: selected, subtypes: subtypes.filter(subtype => allowedSubtypes.has(subtype)) });
+  };
+  const toggleSubtype = (subtype: EvidenceSubtype) => {
+    onChange({
+      classifications,
+      subtypes: subtypes.includes(subtype) ? subtypes.filter(item => item !== subtype) : [...subtypes, subtype],
+    });
+  };
+  return (
+    <div className={compact ? 'mt-2' : 'mt-3'}>
+      <div className="flex flex-wrap gap-2">
+        {EVIDENCE_CLASSIFICATIONS.map(group => (
+          <label key={group.value} title={group.description} className={`flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold transition ${classifications.includes(group.value) ? 'border-teal-600 bg-teal-50 text-teal-900' : 'border-zinc-200 bg-white text-zinc-600 hover:border-teal-300'}`}>
+            <input type="checkbox" checked={classifications.includes(group.value)} onChange={() => toggleClassification(group.value)} className="accent-teal-700" />
+            {group.name}
+          </label>
+        ))}
+      </div>
+      {classifications.length > 0 && (
+        <div className="mt-2 grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+          {EVIDENCE_CLASSIFICATIONS.filter(group => classifications.includes(group.value)).flatMap(group =>
+            group.subtypes.map(subtype => (
+              <label key={subtype.value} className="flex cursor-pointer items-start gap-1.5 rounded border border-zinc-200 bg-zinc-50 px-2 py-1 text-[11px] leading-4 text-zinc-700 hover:border-teal-300">
+                <input type="checkbox" checked={subtypes.includes(subtype.value)} onChange={() => toggleSubtype(subtype.value)} className="mt-0.5 accent-teal-700" />
+                {subtype.name}
+              </label>
+            )),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function withPreRplEvidence(current: RplRecord): RplRecord {
   const checklist = current.student.preRplChecklist;
   const candidates: Array<{ provided: boolean; title: string; reference: string; sourceKey: NonNullable<EvidenceItem['sourceKey']> }> = [
@@ -146,6 +205,8 @@ function withPreRplEvidence(current: RplRecord): RplRecord {
       reference: candidate.reference,
       notes: 'Provided during Pre-RPL intake',
       type: 'reports' as const,
+      classifications: ['indirect'] as EvidenceClassification[],
+      subtypes: ['work-sample-portfolio'] as EvidenceSubtype[],
       sourceKey: candidate.sourceKey,
     }));
   return additions.length ? { ...current, evidence: [...current.evidence, ...additions] } : current;
@@ -476,6 +537,11 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
             <Plus className="mr-1.5 h-4 w-4" />Add evidence
           </Button>
         </div>
+        <EvidenceClassificationFields
+          classifications={newEvidence.classifications}
+          subtypes={newEvidence.subtypes}
+          onChange={patch => setNewEvidence(current => ({ ...current, ...patch }))}
+        />
       </section>
 
       {record.evidence.length ? (
@@ -494,6 +560,12 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
                <select value={evidence.type} onChange={event => updateEvidence(evidence.id, { type: event.target.value as EvidenceItem['type'] })} aria-label={`${evidenceCode(index)} evidence type`} className="mt-2 h-8 w-full rounded-md border border-zinc-200 bg-zinc-50 px-2 text-xs font-medium text-zinc-700 outline-none focus:border-teal-700">
                  {EVIDENCE_TYPES.map(type => <option key={type.value} value={type.value}>{type.name}</option>)}
                </select>
+               <EvidenceClassificationFields
+                 compact
+                 classifications={evidence.classifications}
+                 subtypes={evidence.subtypes}
+                 onChange={patch => updateEvidence(evidence.id, patch)}
+               />
             </article>
           ))}
         </section>
