@@ -16,10 +16,11 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { DatePickerInput } from '@/components/ui/date-picker-input';
 import { buildRows } from '@/lib/unit-rows';
 import { exportRplToWord } from '@/lib/export-rpl-doc';
 import {
-  EVIDENCE_COLOURS,
+  EVIDENCE_TYPES,
   createEmptyRplRecord,
   evidenceCode,
   hasRplRecord,
@@ -34,6 +35,7 @@ import {
   type RplRecord,
   type StudentRecordSummary,
   type StudentDetails,
+  studentDisplayName,
 } from '@/lib/rpl-state';
 
 type Stage = 'student' | 'evidence' | 'mapping' | 'gaps' | 'review' | 'final';
@@ -53,7 +55,7 @@ const DEFAULT_NEW_EVIDENCE: NewEvidenceDraft = {
   title: '',
   reference: '',
   notes: '',
-  color: EVIDENCE_COLOURS[0].value,
+  type: EVIDENCE_TYPES[0].value,
 };
 
 function statusForOutcome(outcome: InterviewOutcome) {
@@ -62,9 +64,9 @@ function statusForOutcome(outcome: InterviewOutcome) {
   return 'Pending';
 }
 
-function tileStyle(color: string) {
-  const palette = EVIDENCE_COLOURS.find(item => item.value === color);
-  return { backgroundColor: palette?.soft ?? '#e2e8f0', borderColor: color, color };
+function tileStyle(type: EvidenceItem['type']) {
+  const palette = EVIDENCE_TYPES.find(item => item.value === type) ?? EVIDENCE_TYPES[0];
+  return { backgroundColor: palette.soft, borderColor: palette.color, color: palette.color };
 }
 
 function EvidenceTile({
@@ -74,6 +76,7 @@ function EvidenceTile({
   selected = false,
   onSelect,
   onDragStart,
+  onDragEnd,
   onRemove,
 }: {
   evidence: EvidenceItem;
@@ -82,6 +85,7 @@ function EvidenceTile({
   selected?: boolean;
   onSelect?: () => void;
   onDragStart?: () => void;
+  onDragEnd?: () => void;
   onRemove?: () => void;
 }) {
   const tile = (
@@ -95,8 +99,9 @@ function EvidenceTile({
     <div
       draggable={Boolean(onDragStart)}
       onDragStart={onDragStart}
-      className={`group relative block w-full rounded-md border-l-4 px-2 py-1.5 text-left shadow-[2px_2px_0_rgba(24,24,27,0.16)] transition hover:-translate-y-0.5 hover:shadow-[3px_3px_0_rgba(24,24,27,0.2)] ${selected ? 'ring-2 ring-zinc-900 ring-offset-2' : ''} ${compact ? 'text-[11px]' : 'text-xs'}`}
-      style={tileStyle(evidence.color)}
+      onDragEnd={onDragEnd}
+      className={`group relative block h-full min-h-10 w-full rounded-md border-l-4 px-2 py-1.5 text-left shadow-[2px_2px_0_rgba(24,24,27,0.16)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[3px_3px_0_rgba(24,24,27,0.2)] active:scale-[0.98] ${selected ? 'ring-2 ring-teal-900 ring-offset-2' : ''} ${compact ? 'text-[11px]' : 'text-xs'}`}
+      style={tileStyle(evidence.type)}
     >
       {onSelect ? (
         <button
@@ -126,15 +131,36 @@ function FieldLabel({ children }: { children: string }) {
   return <label className="mb-1 block text-xs font-bold uppercase tracking-[0.11em] text-zinc-600">{children}</label>;
 }
 
+function withPreRplEvidence(current: RplRecord): RplRecord {
+  const checklist = current.student.preRplChecklist;
+  const candidates: Array<{ provided: boolean; title: string; reference: string; sourceKey: NonNullable<EvidenceItem['sourceKey']> }> = [
+    { provided: checklist.cvResumeProvided, title: 'CV / résumé', reference: checklist.cvResumeFileName, sourceKey: 'pre-rpl-cv' },
+    { provided: checklist.academicTranscriptProvided, title: 'Academic transcript', reference: checklist.academicTranscriptFileName, sourceKey: 'pre-rpl-transcript' },
+    { provided: checklist.positionDescriptionProvided, title: 'Current position description', reference: checklist.positionDescriptionFileName, sourceKey: 'pre-rpl-position-description' },
+  ];
+  const additions = candidates
+    .filter(candidate => candidate.provided && !current.evidence.some(item => item.sourceKey === candidate.sourceKey))
+    .map(candidate => ({
+      id: newEvidenceId(),
+      title: candidate.title,
+      reference: candidate.reference,
+      notes: 'Provided during Pre-RPL intake',
+      type: 'reports' as const,
+      sourceKey: candidate.sourceKey,
+    }));
+  return additions.length ? { ...current, evidence: [...current.evidence, ...additions] } : current;
+}
+
 export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapping }: { unit: UnitOfCompetency; studentNumber?: string; prefill?: StudentDetails; onOpenAssessmentMapping?: () => void }) {
-  const hasPrefill = Boolean(prefill?.name || prefill?.studentNumber);
+  const hasPrefill = Boolean(prefill?.surname || prefill?.givenNames || prefill?.studentNumber);
   const [record, setRecord] = useState<RplRecord>(() => {
     const loaded = studentNumber
       ? loadRplRecordForStudent(unit.code, studentNumber)
       : hasPrefill
         ? createEmptyRplRecord()
         : loadRplRecord(unit.code);
-    return prefill ? { ...loaded, student: { ...loaded.student, ...prefill } } : loaded;
+    const merged = prefill ? { ...loaded, student: { ...loaded.student, ...prefill } } : loaded;
+    return withPreRplEvidence(merged);
   });
   const [activeRecordStudentNumber, setActiveRecordStudentNumber] = useState(
     () => studentNumber ?? (hasPrefill ? 'draft' : (loadRplRecord(unit.code).student.studentNumber.trim() || 'draft')),
@@ -144,6 +170,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   const [stage, setStage] = useState<Stage>('student');
   const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(null);
   const [dragEvidenceId, setDragEvidenceId] = useState<string | null>(null);
+  const [dragTargetRowKey, setDragTargetRowKey] = useState<string | null>(null);
   const [newEvidence, setNewEvidence] = useState(DEFAULT_NEW_EVIDENCE);
   const [exported, setExported] = useState(false);
   const paletteRef = useRef<HTMLDivElement>(null);
@@ -167,7 +194,8 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
   const coveredRows = requirementRows.length - uncoveredRows.length;
   const selectedEvidence = record.evidence.find(item => item.id === selectedEvidenceId) ?? null;
   const stageIndex = STAGES.findIndex(item => item.id === stage);
-  const hasStudent = Boolean(record.student.name.trim() && record.student.studentNumber.trim());
+  const studentName = studentDisplayName(record.student);
+  const hasStudent = Boolean(record.student.surname.trim() && record.student.givenNames.trim() && record.student.studentNumber.trim());
 
   const updateRecord = (fn: (current: RplRecord) => RplRecord) => {
     setRecord(current => fn(current));
@@ -232,7 +260,13 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
     }));
   };
 
-  const goNext = () => setStage(STAGES[Math.min(stageIndex + 1, STAGES.length - 1)].id);
+  const goNext = () => {
+    if (stage === 'student') {
+      saveStudentAndContinue();
+      return;
+    }
+    setStage(STAGES[Math.min(stageIndex + 1, STAGES.length - 1)].id);
+  };
   const goPrevious = () => setStage(STAGES[Math.max(stageIndex - 1, 0)].id);
 
   const onDrop = (rowKey: string) => {
@@ -240,6 +274,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
     if (!evidenceId) return;
     mapEvidence(rowKey, evidenceId);
     setDragEvidenceId(null);
+    setDragTargetRowKey(null);
   };
 
   const saveStudentAndContinue = () => {
@@ -249,8 +284,10 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
       setRecordConflict(nextStudentNumber);
       return;
     }
+    const nextRecord = withPreRplEvidence(record);
+    setRecord(nextRecord);
     setActiveRecordStudentNumber(nextStudentNumber);
-    persistRplRecord(unit.code, record, nextStudentNumber);
+    persistRplRecord(unit.code, nextRecord, nextStudentNumber);
     setSavedStudents(listRplStudents(unit.code));
     setRecordConflict(null);
     setStage('evidence');
@@ -293,7 +330,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
             <span className="mr-1 text-xs font-semibold text-zinc-600">Open a saved student:</span>
             {savedStudents.map(student => (
               <button key={student.studentNumber} type="button" onClick={() => openSavedStudent(student.studentNumber)} className={`rounded-full border px-2.5 py-1 text-xs font-medium ${student.studentNumber === activeRecordStudentNumber ? 'border-teal-700 bg-teal-100 text-teal-900' : 'border-zinc-300 bg-white text-zinc-700 hover:border-teal-400'}`}>
-                {student.name || 'Unnamed'} · {student.studentNumber}
+                {studentDisplayName(student) || 'Unnamed'} · {student.studentNumber}
               </button>
             ))}
             <button type="button" onClick={startNewStudent} className="rounded-full border border-dashed border-zinc-400 px-2.5 py-1 text-xs font-medium text-zinc-700 hover:border-teal-500 hover:text-teal-800">New record</button>
@@ -301,11 +338,20 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
         )}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <FieldLabel>Student name</FieldLabel>
+            <FieldLabel>Surname</FieldLabel>
             <input
-              value={record.student.name}
-              onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, name: event.target.value } }))}
-              placeholder="e.g. Alex Morgan"
+              value={record.student.surname}
+              onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, surname: event.target.value } }))}
+              placeholder="e.g. Morgan"
+              className="h-10 w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+            />
+          </div>
+          <div>
+            <FieldLabel>Given names</FieldLabel>
+            <input
+              value={record.student.givenNames}
+              onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, givenNames: event.target.value } }))}
+              placeholder="e.g. Alex"
               className="h-10 w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
             />
           </div>
@@ -337,12 +383,12 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
             />
           </div>
           <div>
-            <FieldLabel>Assessment date</FieldLabel>
-            <input
-              type="date"
+            <FieldLabel>Assessment date (DD/MM/YYYY)</FieldLabel>
+            <DatePickerInput
               value={record.student.assessmentDate}
-              onChange={event => updateRecord(current => ({ ...current, student: { ...current.student, assessmentDate: event.target.value } }))}
-              className="h-10 w-full rounded-md border border-zinc-300 bg-zinc-50 px-2.5 text-sm outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+              onChange={assessmentDate => updateRecord(current => ({ ...current, student: { ...current.student, assessmentDate } }))}
+              ariaLabel="Assessment date"
+              className="bg-zinc-50"
             />
           </div>
         </div>
@@ -383,7 +429,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
           </div>
           <Badge variant="outline" className="border-teal-200 bg-teal-50 text-teal-800">{record.evidence.length} logged</Badge>
         </div>
-        <div className="mt-4 grid gap-2.5 lg:grid-cols-[1.2fr_1fr_1.3fr_auto]">
+        <div className="mt-4 grid gap-2.5 lg:grid-cols-[1.1fr_0.9fr_1.1fr_1fr_auto]">
           <input
             value={newEvidence.title}
             onChange={event => setNewEvidence(current => ({ ...current, title: event.target.value }))}
@@ -391,6 +437,14 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
             placeholder="Evidence title"
              className="h-9 rounded-md border border-zinc-300 px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
           />
+          <select
+            value={newEvidence.type}
+            onChange={event => setNewEvidence(current => ({ ...current, type: event.target.value as EvidenceItem['type'] }))}
+            aria-label="Evidence type"
+            className="h-9 rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+          >
+            {EVIDENCE_TYPES.map(type => <option key={type.value} value={type.value}>{type.name}</option>)}
+          </select>
           <input
             value={newEvidence.reference}
             onChange={event => setNewEvidence(current => ({ ...current, reference: event.target.value }))}
@@ -407,19 +461,6 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
             <Plus className="mr-1.5 h-4 w-4" />Add evidence
           </Button>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {EVIDENCE_COLOURS.map(color => (
-            <button
-              key={color.value}
-              type="button"
-              onClick={() => setNewEvidence(current => ({ ...current, color: color.value }))}
-              className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition ${newEvidence.color === color.value ? 'border-zinc-900 ring-2 ring-zinc-200' : 'border-zinc-200 hover:border-zinc-400'}`}
-            >
-              <span className="h-3 w-3 rounded-full" style={{ backgroundColor: color.value }} />
-              {color.name}
-            </button>
-          ))}
-        </div>
       </section>
 
       {record.evidence.length ? (
@@ -435,17 +476,15 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
               <input value={evidence.title} onChange={event => updateEvidence(evidence.id, { title: event.target.value })} aria-label={`${evidenceCode(index)} title`} className="w-full border-0 border-b border-zinc-200 pb-1.5 text-sm font-semibold outline-none focus:border-teal-700" />
                <input value={evidence.reference} onChange={event => updateEvidence(evidence.id, { reference: event.target.value })} aria-label={`${evidenceCode(index)} reference`} placeholder="Reference / date" className="mt-2 w-full border-0 border-b border-zinc-100 pb-1.5 text-xs text-zinc-600 outline-none focus:border-teal-700" />
                <textarea value={evidence.notes} onChange={event => updateEvidence(evidence.id, { notes: event.target.value })} aria-label={`${evidenceCode(index)} notes`} placeholder="Evidence details or assessor notes" rows={2} className="mt-2 w-full resize-none rounded-md bg-zinc-50 p-2 text-xs outline-none ring-1 ring-zinc-100 focus:ring-2 focus:ring-teal-200" />
-               <div className="mt-2 flex gap-1.5">
-                {EVIDENCE_COLOURS.map(color => (
-                  <button key={color.value} type="button" onClick={() => updateEvidence(evidence.id, { color: color.value })} aria-label={`Set ${evidence.title} to ${color.name}`} className={`h-5 w-5 rounded-full border-2 transition ${evidence.color === color.value ? 'scale-110 border-zinc-900' : 'border-white hover:scale-110'}`} style={{ backgroundColor: color.value }} />
-                ))}
-              </div>
+               <select value={evidence.type} onChange={event => updateEvidence(evidence.id, { type: event.target.value as EvidenceItem['type'] })} aria-label={`${evidenceCode(index)} evidence type`} className="mt-2 h-8 w-full rounded-md border border-zinc-200 bg-zinc-50 px-2 text-xs font-medium text-zinc-700 outline-none focus:border-teal-700">
+                 {EVIDENCE_TYPES.map(type => <option key={type.value} value={type.value}>{type.name}</option>)}
+               </select>
             </article>
           ))}
         </section>
       ) : (
         <div className="rounded-xl border border-dashed border-zinc-300 bg-white py-16 text-center text-sm text-zinc-500">
-          Add the first evidence piece above. Each one will become a coloured tile in the mapping board.
+          Add the first evidence piece above. Each one will become a labelled tile in the mapping board.
         </div>
       )}
     </div>
@@ -471,9 +510,9 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
       )}
       <div className="w-full max-w-full overflow-x-auto rounded-xl border border-zinc-300 bg-zinc-200 shadow-sm">
         <div className="grid min-w-[900px] grid-cols-[220px_1fr]">
-          <aside ref={paletteRef} className="border-r border-zinc-300 bg-zinc-950 p-3 text-white">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-300">Evidence palette</p>
-            <p className="mt-1.5 text-xs leading-5 text-zinc-400">Drag evidence to the matrix. Click once to select it for click-to-map mode.</p>
+          <aside ref={paletteRef} className="border-r border-teal-800 bg-teal-900 p-3 text-white">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-200">Evidence palette</p>
+            <p className="mt-1.5 text-xs leading-5 text-teal-100">Drag evidence to the matrix. Click once to select it for click-to-map mode.</p>
             <div className="mt-3 space-y-2">
               {record.evidence.map((item, index) => (
                 <EvidenceTile
@@ -483,9 +522,10 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
                   selected={item.id === selectedEvidenceId}
                   onSelect={() => setSelectedEvidenceId(current => current === item.id ? null : item.id)}
                   onDragStart={() => setDragEvidenceId(item.id)}
+                  onDragEnd={() => { setDragEvidenceId(null); setDragTargetRowKey(null); }}
                 />
               ))}
-              {!record.evidence.length && <p className="rounded border border-dashed border-zinc-700 p-3 text-xs leading-5 text-zinc-500">No evidence logged yet.</p>}
+              {!record.evidence.length && <p className="rounded border border-dashed border-teal-600 p-3 text-xs leading-5 text-teal-200">No evidence logged yet.</p>}
             </div>
           </aside>
           <div className="overflow-x-auto bg-white">
@@ -507,14 +547,16 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
                     <tr key={row.key} className="align-top hover:bg-zinc-50">
                        <td className="border-b border-zinc-200 px-3 py-2.5 leading-5 text-zinc-800">{row.label}</td>
                       <td
+                        onDragEnter={() => setDragTargetRowKey(row.key)}
+                        onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragTargetRowKey(null); }}
                         onDragOver={event => event.preventDefault()}
                         onDrop={() => onDrop(row.key)}
-                         className={`min-h-14 border-b border-l border-zinc-200 px-2.5 py-1.5 ${selectedEvidenceId ? 'bg-teal-50/40' : 'bg-white'}`}
+                         className={`min-h-14 border-b border-l border-zinc-200 px-2.5 py-1.5 transition-all duration-200 ${dragTargetRowKey === row.key ? 'bg-teal-100 ring-2 ring-inset ring-teal-500' : selectedEvidenceId ? 'bg-teal-50/40' : 'bg-white'}`}
                       >
                         {mapped.length ? (
-                           <div className="flex flex-wrap gap-1.5">
+                           <div className="flex min-h-12 flex-wrap items-stretch gap-1.5">
                             {mapped.map(({ id, evidence }) => (
-                               <div key={id} className="min-w-[145px] max-w-[225px]">
+                               <div key={id} className="min-w-[145px] max-w-[225px] flex-1 animate-in slide-in-from-left-2 fade-in duration-200">
                                 <EvidenceTile evidence={evidence} index={record.evidence.findIndex(item => item.id === id)} compact onRemove={() => unmapEvidence(row.key, id)} />
                               </div>
                             ))}
@@ -559,7 +601,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
           {uncoveredRows.map(row => {
             const interview = record.interviews[row.key] ?? { question: '', studentResponse: '', assessorNotes: '', outcome: 'pending' as const };
             return (
-              <article key={row.key} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <article key={row.key} className="rounded-xl border border-teal-200 bg-teal-50/60 p-4 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <p className="max-w-3xl text-sm font-semibold leading-6 text-zinc-900">{row.label}</p>
                   <select value={interview.outcome} onChange={event => updateInterview(row.key, { outcome: event.target.value as InterviewOutcome })} className="h-9 rounded-md border border-zinc-300 bg-zinc-50 px-2 text-xs font-medium outline-none focus:border-teal-700">
@@ -595,7 +637,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
       </div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          ['Student', hasStudent ? record.student.name : 'Details incomplete', hasStudent ? 'text-teal-900 bg-teal-50 border-teal-200' : 'text-rose-900 bg-rose-50 border-rose-200'],
+          ['Student', hasStudent ? studentName : 'Details incomplete', hasStudent ? 'text-teal-900 bg-teal-50 border-teal-200' : 'text-rose-900 bg-rose-50 border-rose-200'],
           ['Evidence logged', `${record.evidence.length} items`, 'text-indigo-900 bg-indigo-50 border-indigo-200'],
           ['Directly covered', `${coveredRows} of ${requirementRows.length}`, 'text-emerald-900 bg-emerald-50 border-emerald-200'],
           ['Gaps resolved', `${resolvedGaps} of ${uncoveredRows.length}`, 'text-amber-900 bg-amber-50 border-amber-200'],
@@ -622,7 +664,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
                 const interview = record.interviews[row.key];
                 return <tr key={row.key} className="border-t border-zinc-100 align-top">
                    <td className="px-4 py-2.5 text-zinc-800">{row.label}</td>
-                   <td className="px-4 py-2.5">{mapped.length ? <div className="flex flex-wrap gap-1.5">{mapped.map(item => <span key={item.id} style={tileStyle(item.color)} className="rounded border-l-4 px-2 py-1 text-xs font-semibold">{item.title}</span>)}</div> : <span className="text-xs text-zinc-400">No direct evidence</span>}</td>
+                   <td className="px-4 py-2.5">{mapped.length ? <div className="flex flex-wrap gap-1.5">{mapped.map(item => <span key={item.id} style={tileStyle(item.type)} className="rounded border-l-4 px-2 py-1 text-xs font-semibold">{item.title}</span>)}</div> : <span className="text-xs text-zinc-400">No direct evidence</span>}</td>
                    <td className="px-4 py-2.5 text-xs font-medium">{mapped.length ? <span className="text-emerald-700">Mapped</span> : interview ? <span className={interview.outcome === 'resolved' ? 'text-teal-700' : 'text-amber-700'}>{statusForOutcome(interview.outcome)}</span> : <span className="text-amber-700">Gap</span>}</td>
                 </tr>;
               })}
@@ -639,11 +681,11 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
         <p className="text-sm font-semibold text-teal-800">Final output</p>
         <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Final RPL mapping</h2>
         <p className="mt-2 max-w-2xl text-sm leading-5 text-zinc-600">
-          Download a landscape, Word-compatible RPL record containing the student details, evidence log, mapping matrix, interview records and printable student/assessor signature boxes.
+           Download a landscape Word document containing the student details, evidence log, mapping matrix, interview records and printable student/assessor signature boxes.
         </p>
         <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
           <div className="grid gap-2 sm:grid-cols-2">
-            <span><strong>Student:</strong> {record.student.name || 'Not recorded'}</span>
+             <span><strong>Student:</strong> {studentName || 'Not recorded'}</span>
             <span><strong>Student number:</strong> {record.student.studentNumber || 'Not recorded'}</span>
             <span><strong>Trainer / assessor:</strong> {record.student.trainerName || 'Not recorded'}</span>
             <span><strong>Assessment date:</strong> {record.student.assessmentDate || 'Not recorded'}</span>
@@ -651,13 +693,22 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
             <span><strong>Direct mappings:</strong> {coveredRows} of {requirementRows.length}</span>
           </div>
         </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {['Student', 'Assessor'].map(role => (
+            <div key={role} className="rounded-lg border border-teal-200 bg-teal-50/60 p-3 text-xs text-zinc-700">
+              <p className="font-semibold text-teal-900">{role} declaration</p>
+              <div className="mt-5 border-b border-zinc-500 pb-1">Signature</div>
+              <div className="mt-3 border-b border-zinc-500 pb-1">Date (DD/MM/YYYY)</div>
+            </div>
+          ))}
+        </div>
         <Button
-          onClick={() => { exportRplToWord(unit, record); setExported(true); }}
+          onClick={async () => { await exportRplToWord(unit, record); setExported(true); }}
           disabled={!hasStudent}
            className="mt-4 bg-teal-800 hover:bg-teal-700"
         >
           {exported ? <Check className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
-          {exported ? 'Downloaded RPL mapping' : 'Download landscape Word record'}
+          {exported ? 'Downloaded RPL mapping' : 'Download landscape Word document'}
         </Button>
         {!hasStudent && <p className="mt-2 text-xs text-rose-700">Add the student name and student number before finalising.</p>}
       </section>
@@ -690,7 +741,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, onOpenAssessmentMapp
         </div>
         <div className="flex items-center gap-3 text-right text-xs leading-5 text-zinc-500">
           <div>
-            <span className="block font-semibold text-zinc-700">{record.student.name || 'No student selected'}</span>
+            <span className="block font-semibold text-zinc-700">{studentName || 'No student selected'}</span>
             <span>{record.student.studentNumber || 'Student number required'}</span>
           </div>
           {onOpenAssessmentMapping && (

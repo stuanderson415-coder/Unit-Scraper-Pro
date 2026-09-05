@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { CalendarDays, FileText, Loader2, UserRound } from 'lucide-react';
+import { FileText, Loader2, UserRound } from 'lucide-react';
 import { useLookupUnit, type UnitOfCompetency } from '@workspace/api-client-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { DatePickerInput } from '@/components/ui/date-picker-input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { createEmptyPreRplChecklist, type StudentDetails } from '@/lib/rpl-state';
@@ -13,7 +14,10 @@ interface Props {
   isPending: boolean;
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
 
 type ChecklistDocumentProps = {
   id: string;
@@ -50,7 +54,8 @@ function ChecklistDocument({ id, label, checked, fileName, disabled, onCheckedCh
 export function LookupForm({ onUnitLoaded, isPending }: Props) {
   const [code, setCode] = useState('');
   const [intake, setIntake] = useState<StudentDetails>({
-    name: '',
+    surname: '',
+    givenNames: '',
     studentNumber: '',
     trainerName: '',
     organisation: '',
@@ -61,7 +66,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
   const lookupUnit = useLookupUnit();
   const { toast } = useToast();
   const loading = lookupUnit.isPending || isPending;
-  const hasRequiredIntake = Boolean(intake.name.trim() && intake.studentNumber.trim());
+  const hasRequiredIntake = Boolean(intake.surname.trim() && intake.givenNames.trim() && intake.studentNumber.trim());
   const updateIntake = (patch: Partial<StudentDetails>) => setIntake(current => ({ ...current, ...patch }));
   const updateChecklist = (patch: Partial<StudentDetails['preRplChecklist']>) => setIntake(current => ({
     ...current,
@@ -75,10 +80,10 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
 
   const handleCodeSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!intake.name.trim() || !intake.studentNumber.trim() || !code.trim()) {
+    if (!hasRequiredIntake || !code.trim()) {
       toast({
         title: 'Complete the required fields',
-        description: 'Enter the student name, student number, and unit code before selecting Start.',
+        description: 'Enter the student surname, given names, student number, and unit code before selecting Start.',
         variant: 'destructive',
       });
       return;
@@ -113,12 +118,16 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
       </CardHeader>
 
       <CardContent className="pt-4">
-        <form onSubmit={handleCodeSubmit} className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,2fr)_minmax(9rem,1fr)]">
+        <form onSubmit={handleCodeSubmit} className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <label className="grid min-w-0 gap-1">
-            <span className="text-xs font-semibold text-zinc-700">Student name <span className="text-rose-600">*</span></span>
-            <Input placeholder="e.g. Alex Morgan" value={intake.name} onChange={event => updateIntake({ name: event.target.value })} disabled={loading} />
+            <span className="text-xs font-semibold text-zinc-700">Surname <span className="text-rose-600">*</span></span>
+            <Input placeholder="e.g. Morgan" value={intake.surname} onChange={event => updateIntake({ surname: event.target.value })} disabled={loading} />
           </label>
           <label className="grid min-w-0 gap-1">
+            <span className="text-xs font-semibold text-zinc-700">Given names <span className="text-rose-600">*</span></span>
+            <Input placeholder="e.g. Alex" value={intake.givenNames} onChange={event => updateIntake({ givenNames: event.target.value })} disabled={loading} />
+          </label>
+          <label className="grid min-w-0 gap-1 lg:col-span-2">
             <span className="text-xs font-semibold text-zinc-700">Student number <span className="text-rose-600">*</span></span>
             <Input placeholder="e.g. 12345678" value={intake.studentNumber} onChange={event => updateIntake({ studentNumber: event.target.value })} disabled={loading} />
           </label>
@@ -127,21 +136,18 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
             <Input placeholder="e.g. Jordan Lee" value={intake.trainerName} onChange={event => updateIntake({ trainerName: event.target.value })} disabled={loading} />
           </label>
           <label className="grid min-w-0 gap-1">
-            <span className="text-xs font-semibold text-zinc-700">Assessment date</span>
-            <div className="relative min-w-0">
-              <CalendarDays className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
-              <Input type="date" value={intake.assessmentDate} onChange={event => updateIntake({ assessmentDate: event.target.value })} className="min-w-0 pl-9" disabled={loading} />
-            </div>
+            <span className="text-xs font-semibold text-zinc-700">Assessment date (DD/MM/YYYY)</span>
+            <DatePickerInput value={intake.assessmentDate} onChange={assessmentDate => updateIntake({ assessmentDate })} disabled={loading} ariaLabel="Assessment date" />
           </label>
           <label className="grid min-w-0 gap-1 lg:col-span-2">
             <span className="text-xs font-semibold text-zinc-700">Parent Qualification</span>
             <Input placeholder="e.g. Certificate III in Community Services" value={intake.organisation} onChange={event => updateIntake({ organisation: event.target.value })} disabled={loading} />
           </label>
-          <label className="grid min-w-0 gap-1">
+          <label className="grid min-w-0 gap-1 lg:col-span-2">
             <span className="text-xs font-semibold text-zinc-700">Unit seeking RPL for <span className="text-rose-600">*</span></span>
             <Input placeholder="e.g. CHCCCS007" value={code} onChange={event => setCode(event.target.value.toUpperCase())} className="font-mono" disabled={loading} />
           </label>
-          <div className="flex min-w-0 items-end">
+          <div className="flex min-w-0 items-end lg:col-span-2">
             <Button type="submit" disabled={loading} className="h-9 w-full px-2 text-xs bg-teal-600 hover:bg-teal-700">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Start
@@ -164,13 +170,13 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
                 <label htmlFor="pre-rpl-interview" className="cursor-pointer text-[11px] font-semibold text-zinc-800">Pre-RPL interview completed</label>
               </div>
               <label className="grid gap-1">
-                <span className="text-[11px] font-semibold text-zinc-700">Interview date</span>
-                <Input
-                  type="date"
+                <span className="text-[11px] font-semibold text-zinc-700">Interview date (DD/MM/YYYY)</span>
+                <DatePickerInput
                   value={intake.preRplChecklist.interviewDate}
-                  onChange={event => updateChecklist({ interviewDate: event.target.value })}
+                  onChange={interviewDate => updateChecklist({ interviewDate })}
                   disabled={loading}
-                  className="h-8 bg-white text-xs"
+                  ariaLabel="Pre-RPL interview date"
+                  className="h-8 text-xs"
                 />
               </label>
             </section>

@@ -8,6 +8,7 @@ import {
   listRplProgress,
   removeRplProgress,
   RPL_PROGRESS_EVENT,
+  studentDisplayName,
   type RplProgressItem,
 } from '@/lib/rpl-state';
 
@@ -35,13 +36,13 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
 
   const handleDelete = (entry: RplProgressItem, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm(`Remove the RPL record for ${entry.name || entry.studentNumber}?`)) return;
+    if (!window.confirm(`Remove the RPL record for ${studentDisplayName(entry) || entry.studentNumber}?`)) return;
     removeRplProgress(entry.unitCode, entry.studentNumber);
   };
 
   return (
-    <div className="hidden h-full w-52 shrink-0 flex-col overflow-hidden bg-zinc-700 md:flex">
-      <div className="flex items-center justify-between border-b border-zinc-600 bg-zinc-800 p-2">
+    <div className="hidden h-full w-52 shrink-0 flex-col overflow-hidden bg-zinc-500 md:flex">
+      <div className="flex items-center justify-between border-b border-zinc-500 bg-zinc-600 p-2">
         <div className="flex items-center gap-1.5 text-xs font-medium text-zinc-100">
           <History className="h-3.5 w-3.5 text-white" />
           Applications in progress
@@ -63,11 +64,11 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
             <p className="text-xs text-zinc-300">Start an RPL assessment to see it here.</p>
           </div>
         ) : (
-          <div className="divide-y divide-zinc-600">
+          <div className="divide-y divide-zinc-400">
             {progress.map(entry => (
               <div
                 key={`${entry.unitCode}-${entry.studentNumber}`}
-                 className="group flex cursor-pointer items-start gap-2 border-l-2 border-transparent p-2.5 transition-colors hover:border-purple-500 hover:bg-purple-600/20"
+                 className="group flex cursor-pointer items-start gap-2 border-l-2 border-transparent p-2.5 transition-colors hover:border-teal-300 hover:bg-teal-700"
                 onClick={() => onSelect(entry.unitCode, entry.studentNumber)}
               >
                 <div className="mt-0.5">
@@ -75,7 +76,7 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm text-zinc-100 truncate">
-                    {entry.name || 'Unnamed student'}
+                    {studentDisplayName(entry) || 'Unnamed student'}
                   </div>
                   <div className="text-xs text-zinc-400 truncate mt-0.5">
                     {entry.unitCode} · {entry.studentNumber}

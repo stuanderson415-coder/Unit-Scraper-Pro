@@ -1,11 +1,35 @@
-export const EVIDENCE_COLOURS = [
-  { name: 'Teal',    value: '#0f766e', soft: '#ccfbf1' },
-  { name: 'Indigo',  value: '#4338ca', soft: '#e0e7ff' },
-  { name: 'Rose',    value: '#be123c', soft: '#ffe4e6' },
-  { name: 'Amber',   value: '#b45309', soft: '#fef3c7' },
-  { name: 'Emerald', value: '#047857', soft: '#d1fae5' },
-  { name: 'Violet',  value: '#7e22ce', soft: '#f3e8ff' },
+export const EVIDENCE_TYPES = [
+  { name: 'Support letter', value: 'support-letter', color: '#0f766e', soft: '#ccfbf1' },
+  { name: 'Case notes', value: 'case-notes', color: '#0369a1', soft: '#e0f2fe' },
+  { name: '3rd party report', value: 'third-party-report', color: '#4338ca', soft: '#e0e7ff' },
+  { name: 'Video', value: 'video', color: '#7e22ce', soft: '#f3e8ff' },
+  { name: 'Audio recording', value: 'audio-recording', color: '#be123c', soft: '#ffe4e6' },
+  { name: 'Reports', value: 'reports', color: '#047857', soft: '#d1fae5' },
+  { name: 'Risk analysis', value: 'risk-analysis', color: '#b45309', soft: '#fef3c7' },
+  { name: 'Group facilitation plan', value: 'group-facilitation-plan', color: '#0e7490', soft: '#cffafe' },
+  { name: 'Grant application', value: 'grant-application', color: '#6d28d9', soft: '#ede9fe' },
 ] as const;
+
+export type EvidenceType = typeof EVIDENCE_TYPES[number]['value'];
+
+const LEGACY_EVIDENCE_TYPE_BY_COLOUR: Record<string, EvidenceType> = {
+  '#0f766e': 'support-letter',
+  '#4338ca': 'third-party-report',
+  '#be123c': 'audio-recording',
+  '#b45309': 'risk-analysis',
+  '#047857': 'reports',
+  '#7e22ce': 'video',
+};
+
+function migrateEvidenceType(type?: string, color?: string): EvidenceType {
+  if (EVIDENCE_TYPES.some(option => option.value === type)) return type as EvidenceType;
+  return LEGACY_EVIDENCE_TYPE_BY_COLOUR[color?.toLowerCase() ?? ''] ?? 'reports';
+}
+
+export function studentDisplayName(student: Partial<Pick<StudentDetails, 'surname' | 'givenNames'>> & { name?: string }) {
+  const formatted = [student.givenNames?.trim(), student.surname?.trim()].filter(Boolean).join(' ');
+  return formatted || student.name?.trim() || '';
+}
 
 export type InterviewOutcome = 'pending' | 'resolved' | 'not-resolved';
 
@@ -38,7 +62,8 @@ export function createEmptyPreRplChecklist(): PreRplChecklist {
 }
 
 export type StudentDetails = {
-  name: string;
+  surname: string;
+  givenNames: string;
   studentNumber: string;
   trainerName: string;
   organisation: string;
@@ -51,7 +76,8 @@ export type EvidenceItem = {
   title: string;
   reference: string;
   notes: string;
-  color: string;
+  type: EvidenceType;
+  sourceKey?: 'pre-rpl-cv' | 'pre-rpl-transcript' | 'pre-rpl-position-description';
 };
 
 export type InterviewRecord = {
@@ -79,7 +105,8 @@ export type RplProgressItem = StudentRecordSummary & {
 export function createEmptyRplRecord(): RplRecord {
   return {
     student: {
-      name: '',
+      surname: '',
+      givenNames: '',
       studentNumber: '',
       trainerName: '',
       organisation: '',
@@ -117,12 +144,20 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
   try {
     const saved = localStorage.getItem(recordKey(unitCode, studentNumber));
     if (!saved) return createEmptyRplRecord();
-    const parsed = JSON.parse(saved) as Partial<RplRecord>;
+    const parsed = JSON.parse(saved) as Omit<Partial<RplRecord>, 'student' | 'evidence'> & {
+      student?: Partial<StudentDetails> & { name?: string };
+      evidence?: Array<Partial<EvidenceItem> & { color?: string }>;
+    };
+    const legacyName = parsed.student?.name?.trim() ?? '';
+    const legacyParts = legacyName.split(/\s+/);
+    const legacySurname = legacyParts.length > 1 ? legacyParts.pop() ?? '' : '';
+    const legacyGivenNames = legacyParts.join(' ') || legacyName;
     return {
       ...createEmptyRplRecord(),
       ...parsed,
       student: {
-        name: parsed.student?.name ?? '',
+        surname: parsed.student?.surname ?? legacySurname,
+        givenNames: parsed.student?.givenNames ?? legacyGivenNames,
         studentNumber: parsed.student?.studentNumber ?? '',
         trainerName: parsed.student?.trainerName ?? '',
         organisation: parsed.student?.organisation ?? '',
@@ -132,7 +167,14 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
           ...parsed.student?.preRplChecklist,
         },
       },
-      evidence: parsed.evidence ?? [],
+      evidence: (parsed.evidence ?? []).map(item => ({
+        id: item.id ?? newEvidenceId(),
+        title: item.title ?? '',
+        reference: item.reference ?? '',
+        notes: item.notes ?? '',
+        type: migrateEvidenceType(item.type, item.color),
+        sourceKey: item.sourceKey,
+      })),
       mappings: parsed.mappings ?? {},
       interviews: parsed.interviews ?? {},
     };
@@ -220,7 +262,8 @@ export function persistRplRecord(unitCode: string, record: RplRecord, recordStud
     if (studentNumber) {
       const current = listRplStudents(unitCode).filter(item => item.studentNumber !== studentNumber);
       const summary: StudentRecordSummary = {
-        name: record.student.name,
+        surname: record.student.surname,
+        givenNames: record.student.givenNames,
         studentNumber,
         trainerName: record.student.trainerName,
         organisation: record.student.organisation,
