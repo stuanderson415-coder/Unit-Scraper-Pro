@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ClipboardCheck, FileCheck2 } from 'lucide-react';
 import { useLookupUnit, type UnitOfCompetency } from '@workspace/api-client-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { HistorySidebar } from '@/components/layout/history-sidebar';
 import { LookupForm } from '@/components/unit/lookup-form';
@@ -153,23 +154,40 @@ export default function Home() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-[#26364d] bg-[#122238] text-white shadow-md">
+      <header className="fixed inset-x-0 top-0 z-50 h-16 border-b border-[#30445f] bg-gradient-to-r from-[#101f34] via-[#18304d] to-[#11253d] text-white shadow-md">
         <div className="flex h-full w-full items-center justify-between gap-3 px-4 md:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <div className="w-[66px] shrink-0 text-center">
+            <div className="w-[82px] shrink-0 text-center">
               <img
                 src="/rpl-companion-logo.png"
                 alt="CIT logo"
-                className="mx-auto h-8 w-[66px] object-contain brightness-0 invert"
+                className="mx-auto h-9 w-[82px] object-contain brightness-0 invert drop-shadow-[0_2px_2px_rgba(0,0,0,0.35)]"
               />
-              <p className="mt-0.5 text-[6px] leading-[6px] text-slate-300">
+              <p className="mt-0.5 text-[7px] leading-[7px] text-slate-200">
                 CIT Logo included for demonstration purposes only
               </p>
             </div>
             <div className="min-w-0">
-              <h1 className="truncate text-base font-bold tracking-tight sm:text-lg">RPL Companion</h1>
+              <h1 className="truncate text-xl font-extrabold tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.45)] sm:text-2xl">RPL Companion</h1>
               <p className="hidden truncate text-xs text-slate-300 sm:block">Recognition of Prior Learning workspace</p>
             </div>
+          </div>
+          <div className="pointer-events-none absolute left-1/2 hidden -translate-x-1/2 flex-col items-center lg:flex">
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" className="pointer-events-auto cursor-help text-xs font-bold uppercase tracking-[0.18em] text-amber-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)]">
+                    Developer Demonstration Version
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs border border-slate-600 bg-slate-950 px-3 py-2 text-center text-xs leading-5 text-slate-100 shadow-xl">
+                  This prototype is original work and is offered in good faith and at no cost for internal evaluation.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <p className="mt-1 text-[10px] font-medium tracking-wide text-slate-300">
+              Developed by Stuart Anderson, FastigiataLab 2026
+            </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <div className="hidden items-center gap-2 md:flex">
