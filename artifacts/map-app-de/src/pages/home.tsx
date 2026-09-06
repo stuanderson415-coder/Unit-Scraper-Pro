@@ -161,7 +161,7 @@ export default function Home() {
                 alt="CIT logo"
                 className="mx-auto h-8 w-[66px] object-contain brightness-0 invert"
               />
-              <p className="mt-0.5 text-[5px] leading-[5px] text-slate-400">
+              <p className="mt-0.5 text-[6px] leading-[6px] text-slate-300">
                 CIT Logo included for demonstration purposes only
               </p>
             </div>
