@@ -186,7 +186,7 @@ export default function Home() {
               </Tooltip>
             </TooltipProvider>
             <p className="mt-1 text-[10px] font-medium tracking-wide text-slate-300">
-              Developed by Stuart Anderson, FastigiataLab 2026 ·{' '}
+              Developed by Stuart Anderson ·{' '}
               <a
                 href="https://fastigiatalab.com"
                 target="_blank"
