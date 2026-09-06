@@ -1,16 +1,44 @@
 export const EVIDENCE_TYPES = [
-  { name: 'Support letter', value: 'support-letter', color: '#0f766e', soft: '#ccfbf1' },
-  { name: 'Case notes', value: 'case-notes', color: '#0369a1', soft: '#e0f2fe' },
-  { name: '3rd party report', value: 'third-party-report', color: '#4338ca', soft: '#e0e7ff' },
-  { name: 'Video', value: 'video', color: '#7e22ce', soft: '#f3e8ff' },
-  { name: 'Audio recording', value: 'audio-recording', color: '#be123c', soft: '#ffe4e6' },
-  { name: 'Reports', value: 'reports', color: '#047857', soft: '#d1fae5' },
-  { name: 'Risk analysis', value: 'risk-analysis', color: '#b45309', soft: '#fef3c7' },
-  { name: 'Group facilitation plan', value: 'group-facilitation-plan', color: '#0e7490', soft: '#cffafe' },
-  { name: 'Grant application', value: 'grant-application', color: '#6d28d9', soft: '#ede9fe' },
+  { name: 'Professional Resume', value: 'professional-resume' },
+  { name: 'Academic transcript', value: 'academic-transcript' },
+  { name: 'Position Description', value: 'position-description' },
+  { name: 'Presentation', value: 'presentation' },
+  { name: 'Session Plan', value: 'session-plan' },
+  { name: 'Demonstration', value: 'demonstration' },
+  { name: 'Policy / Procedure', value: 'policy-procedure' },
+  { name: "Applicant's Written Work", value: 'applicant-written-work' },
+  { name: 'Performance Review', value: 'performance-review' },
+  { name: 'Written Reference', value: 'written-reference' },
+  { name: 'Risk Assessment', value: 'risk-assessment' },
+  { name: 'Image', value: 'image' },
+  { name: 'Video', value: 'video' },
+  { name: 'Audio', value: 'audio' },
+  { name: 'Case Note', value: 'case-note' },
+  { name: 'Licence / Permit', value: 'licence-permit' },
+  { name: 'Other', value: 'other' },
 ] as const;
 
 export type EvidenceType = typeof EVIDENCE_TYPES[number]['value'];
+
+export const EVIDENCE_COLOURS = [
+  { name: 'Teal', value: 'teal', color: '#0f766e', soft: '#ccfbf1' },
+  { name: 'Blue', value: 'blue', color: '#0369a1', soft: '#e0f2fe' },
+  { name: 'Indigo', value: 'indigo', color: '#4338ca', soft: '#e0e7ff' },
+  { name: 'Purple', value: 'purple', color: '#7e22ce', soft: '#f3e8ff' },
+  { name: 'Rose', value: 'rose', color: '#be123c', soft: '#ffe4e6' },
+  { name: 'Green', value: 'green', color: '#047857', soft: '#d1fae5' },
+  { name: 'Amber', value: 'amber', color: '#b45309', soft: '#fef3c7' },
+] as const;
+
+export type EvidenceColour = typeof EVIDENCE_COLOURS[number]['value'];
+
+export const EVIDENCE_LOCATIONS = [
+  { name: 'Sighted / Logged', value: 'sighted-logged' },
+  { name: 'Hard Copy File', value: 'hard-copy-file' },
+  { name: 'Digital / SharePoint', value: 'digital-sharepoint' },
+] as const;
+
+export type EvidenceLocation = typeof EVIDENCE_LOCATIONS[number]['value'];
 
 export const EVIDENCE_CLASSIFICATIONS = [
   {
@@ -50,17 +78,27 @@ export type EvidenceClassification = typeof EVIDENCE_CLASSIFICATIONS[number]['va
 export type EvidenceSubtype = typeof EVIDENCE_CLASSIFICATIONS[number]['subtypes'][number]['value'];
 
 const LEGACY_EVIDENCE_TYPE_BY_COLOUR: Record<string, EvidenceType> = {
-  '#0f766e': 'support-letter',
-  '#4338ca': 'third-party-report',
-  '#be123c': 'audio-recording',
-  '#b45309': 'risk-analysis',
-  '#047857': 'reports',
+  '#0f766e': 'written-reference',
+  '#4338ca': 'performance-review',
+  '#be123c': 'audio',
+  '#b45309': 'risk-assessment',
+  '#047857': 'other',
   '#7e22ce': 'video',
 };
 
 function migrateEvidenceType(type?: string, color?: string): EvidenceType {
   if (EVIDENCE_TYPES.some(option => option.value === type)) return type as EvidenceType;
-  return LEGACY_EVIDENCE_TYPE_BY_COLOUR[color?.toLowerCase() ?? ''] ?? 'reports';
+  const legacyTypes: Record<string, EvidenceType> = {
+    'support-letter': 'written-reference',
+    'case-notes': 'case-note',
+    'third-party-report': 'performance-review',
+    'audio-recording': 'audio',
+    reports: 'other',
+    'risk-analysis': 'risk-assessment',
+    'group-facilitation-plan': 'session-plan',
+    'grant-application': 'applicant-written-work',
+  };
+  return legacyTypes[type ?? ''] ?? LEGACY_EVIDENCE_TYPE_BY_COLOUR[color?.toLowerCase() ?? ''] ?? 'other';
 }
 
 export function studentDisplayName(student: Partial<Pick<StudentDetails, 'surname' | 'givenNames'>> & { name?: string }) {
@@ -73,6 +111,7 @@ export type InterviewOutcome = 'pending' | 'resolved' | 'not-resolved';
 export type PreRplChecklist = {
   interviewCompleted: boolean;
   interviewDate: string;
+  interviewNotes: string;
   cvResumeProvided: boolean;
   cvResumeFileName: string;
   academicTranscriptProvided: boolean;
@@ -87,6 +126,7 @@ export function createEmptyPreRplChecklist(): PreRplChecklist {
   return {
     interviewCompleted: false,
     interviewDate: '',
+    interviewNotes: '',
     cvResumeProvided: false,
     cvResumeFileName: '',
     academicTranscriptProvided: false,
@@ -114,6 +154,8 @@ export type EvidenceItem = {
   reference: string;
   notes: string;
   type: EvidenceType;
+  colour: EvidenceColour;
+  location: EvidenceLocation;
   classifications: EvidenceClassification[];
   subtypes: EvidenceSubtype[];
   sourceKey?: 'pre-rpl-cv' | 'pre-rpl-transcript' | 'pre-rpl-position-description';
@@ -126,7 +168,7 @@ export type InterviewRecord = {
   outcome: InterviewOutcome;
 };
 
-export type RplOutcome = 'pending' | 'full-rpl' | 'partial-rpl' | 'not-granted';
+export type RplOutcome = 'granted' | 'in-progress' | 'not-granted';
 
 export type RplFinalisation = {
   outcome: RplOutcome;
@@ -139,7 +181,7 @@ export type RplFinalisation = {
 
 export function createEmptyRplFinalisation(): RplFinalisation {
   return {
-    outcome: 'pending',
+    outcome: 'in-progress',
     outcomeNotes: '',
     studentSignature: '',
     studentSignatureDate: '',
@@ -207,9 +249,10 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
   try {
     const saved = localStorage.getItem(recordKey(unitCode, studentNumber));
     if (!saved) return createEmptyRplRecord();
-    const parsed = JSON.parse(saved) as Omit<Partial<RplRecord>, 'student' | 'evidence'> & {
+    const parsed = JSON.parse(saved) as Omit<Partial<RplRecord>, 'student' | 'evidence' | 'finalisation'> & {
       student?: Partial<StudentDetails> & { name?: string };
       evidence?: Array<Partial<EvidenceItem> & { color?: string }>;
+      finalisation?: Omit<Partial<RplFinalisation>, 'outcome'> & { outcome?: string };
     };
     const legacyName = parsed.student?.name?.trim() ?? '';
     const legacyParts = legacyName.split(/\s+/);
@@ -236,6 +279,8 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
         reference: item.reference ?? '',
         notes: item.notes ?? '',
         type: migrateEvidenceType(item.type, item.color),
+        colour: item.colour ?? 'teal',
+        location: item.location ?? 'sighted-logged',
         classifications: item.classifications ?? [],
         subtypes: item.subtypes ?? [],
         sourceKey: item.sourceKey,
@@ -245,6 +290,11 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
       finalisation: {
         ...createEmptyRplFinalisation(),
         ...parsed.finalisation,
+        outcome: parsed.finalisation?.outcome === 'not-granted'
+          ? 'not-granted'
+          : parsed.finalisation?.outcome === 'full-rpl'
+            ? 'granted'
+            : 'in-progress',
       },
     };
   } catch {

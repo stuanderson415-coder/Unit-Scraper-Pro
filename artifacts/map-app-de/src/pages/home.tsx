@@ -128,6 +128,7 @@ export default function Home() {
       preRplChecklist: {
         interviewCompleted: true,
         interviewDate: new Date().toLocaleDateString('en-CA'),
+        interviewNotes: 'Candidate advised of the RPL process, evidence expectations, and next steps.',
         cvResumeProvided: true,
         cvResumeFileName: 'preview-cv.pdf',
         academicTranscriptProvided: true,

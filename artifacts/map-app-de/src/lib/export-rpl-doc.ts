@@ -16,7 +16,7 @@ import {
 import { saveAs } from 'file-saver';
 import type { UnitOfCompetency } from '@workspace/api-client-react';
 import { buildRows } from './unit-rows';
-import { EVIDENCE_CLASSIFICATIONS, EVIDENCE_TYPES, evidenceCode, studentDisplayName, type RplRecord } from './rpl-state';
+import { EVIDENCE_CLASSIFICATIONS, EVIDENCE_LOCATIONS, EVIDENCE_TYPES, evidenceCode, studentDisplayName, type RplRecord } from './rpl-state';
 
 const PAGE_WIDTH = 15138;
 const MARGIN = 720;
@@ -78,10 +78,9 @@ function formatDate(value: string) {
 }
 
 function outcomeLabel(outcome: RplRecord['finalisation']['outcome']) {
-  if (outcome === 'full-rpl') return 'Full RPL granted';
-  if (outcome === 'partial-rpl') return 'Partial RPL granted';
-  if (outcome === 'not-granted') return 'RPL not granted';
-  return 'Decision pending';
+  if (outcome === 'granted') return 'RPL Granted';
+  if (outcome === 'not-granted') return 'RPL Not Granted';
+  return 'In Progress';
 }
 
 function evidenceSubtypeName(value: string) {
@@ -101,25 +100,27 @@ export async function exportRplToWord(unit: UnitOfCompetency, record: RplRecord)
     ['Trainer / assessor', record.student.trainerName],
     ['Parent Qualification', record.student.organisation],
     ['Assessment date', formatDate(record.student.assessmentDate)],
+    ['Pre-assessment interview notes', record.student.preRplChecklist.interviewNotes],
     ['RPL outcome', outcomeLabel(record.finalisation.outcome)],
     ['Outcome notes / conditions', record.finalisation.outcomeNotes],
   ];
 
-  const evidenceWidths = [900, 1900, 2500, 3000, PAGE_WIDTH - 8300];
+  const evidenceWidths = [700, 1700, 1700, 2200, 3000, PAGE_WIDTH - 9300];
   const evidenceRows = record.evidence.length
     ? record.evidence.map((item, index) => new TableRow({
       children: [
         cell(evidenceCode(index), evidenceWidths[0]),
         cell(EVIDENCE_TYPES.find(type => type.value === item.type)?.name ?? 'Reports', evidenceWidths[1]),
+        cell(EVIDENCE_LOCATIONS.find(location => location.value === item.location)?.name ?? 'Sighted / Logged', evidenceWidths[2]),
         cell([
           item.classifications.map(value => EVIDENCE_CLASSIFICATIONS.find(group => group.value === value)?.name).filter(Boolean).join(', '),
           item.subtypes.map(evidenceSubtypeName).join(', '),
-        ].filter(Boolean).join('\n'), evidenceWidths[2]),
-        cell(`${item.title}${item.reference ? `\n${item.reference}` : ''}`, evidenceWidths[3]),
-        cell(item.notes, evidenceWidths[4]),
+        ].filter(Boolean).join('\n'), evidenceWidths[3]),
+        cell(`${item.title}${item.reference ? `\n${item.reference}` : ''}`, evidenceWidths[4]),
+        cell(item.notes, evidenceWidths[5]),
       ],
     }))
-    : [new TableRow({ children: [cell('No evidence items logged.', undefined, { span: 5 })] })];
+    : [new TableRow({ children: [cell('No evidence items logged.', undefined, { span: 6 })] })];
 
   const mappingWidths = [7000, 4400, PAGE_WIDTH - 11400];
   const evidenceById = new Map(record.evidence.map((item, index) => [item.id, `${evidenceCode(index)} — ${item.title}`]));
@@ -190,17 +191,17 @@ export async function exportRplToWord(unit: UnitOfCompetency, record: RplRecord)
         table(details.map(([label, value]) => new TableRow({ children: [cell(label, detailWidths[0], { bold: true, fill: 'E2E8F0' }), cell(value, detailWidths[1])] })), detailWidths),
         heading('Evidence log'),
         table([
-          new TableRow({ tableHeader: true, children: ['Code', 'Document type', 'Evidence class / subtype', 'Evidence piece / reference', 'Assessor notes'].map((label, index) => cell(label, evidenceWidths[index], { bold: true, fill: 'CCFBF1' })) }),
+          new TableRow({ tableHeader: true, children: ['Code', 'Evidence type', 'Location', 'Evidence class / subtype', 'Evidence piece / reference', 'Assessor notes'].map((label, index) => cell(label, evidenceWidths[index], { bold: true, fill: 'CCFBF1' })) }),
           ...evidenceRows,
         ], evidenceWidths),
         heading('RPL evidence mapping'),
         table([
-          new TableRow({ tableHeader: true, children: ['Competency requirement', 'Evidence mapped', 'Gap / interview outcome'].map((label, index) => cell(label, mappingWidths[index], { bold: true, fill: 'CCFBF1' })) }),
+          new TableRow({ tableHeader: true, children: ['Performance Criteria', 'Evidence mapped', 'Gap / interview outcome'].map((label, index) => cell(label, mappingWidths[index], { bold: true, fill: 'CCFBF1' })) }),
           ...mappingRows,
         ], mappingWidths),
         heading('Interview and oral-question record'),
         table([
-          new TableRow({ tableHeader: true, children: ['Requirement', 'Question / prompt', 'Student response', 'Assessor outcome / notes'].map((label, index) => cell(label, interviewWidths[index], { bold: true, fill: 'CCFBF1' })) }),
+          new TableRow({ tableHeader: true, children: ['Performance Criteria', 'Question / prompt', 'Student response', 'Assessor outcome / notes'].map((label, index) => cell(label, interviewWidths[index], { bold: true, fill: 'CCFBF1' })) }),
           ...interviewRows,
         ], interviewWidths),
         heading('Signatures'),

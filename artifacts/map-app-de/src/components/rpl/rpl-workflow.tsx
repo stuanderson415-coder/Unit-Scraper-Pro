@@ -4,6 +4,8 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ChevronDown,
+  ChevronRight,
   ClipboardCheck,
   Download,
   FileCheck2,
@@ -21,6 +23,8 @@ import { buildRows } from '@/lib/unit-rows';
 import { exportRplToWord } from '@/lib/export-rpl-doc';
 import {
   EVIDENCE_TYPES,
+  EVIDENCE_COLOURS,
+  EVIDENCE_LOCATIONS,
   EVIDENCE_CLASSIFICATIONS,
   createEmptyRplRecord,
   evidenceCode,
@@ -59,6 +63,8 @@ const DEFAULT_NEW_EVIDENCE: NewEvidenceDraft = {
   reference: '',
   notes: '',
   type: EVIDENCE_TYPES[0].value,
+  colour: EVIDENCE_COLOURS[0].value,
+  location: EVIDENCE_LOCATIONS[0].value,
   classifications: [],
   subtypes: [],
 };
@@ -69,8 +75,8 @@ function statusForOutcome(outcome: InterviewOutcome) {
   return 'Pending';
 }
 
-function tileStyle(type: EvidenceItem['type']) {
-  const palette = EVIDENCE_TYPES.find(item => item.value === type) ?? EVIDENCE_TYPES[0];
+function tileStyle(item: Pick<EvidenceItem, 'colour'>) {
+  const palette = EVIDENCE_COLOURS.find(option => option.value === item.colour) ?? EVIDENCE_COLOURS[0];
   return { backgroundColor: palette.soft, borderColor: palette.color, color: palette.color };
 }
 
@@ -106,7 +112,7 @@ function EvidenceTile({
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       className={`group relative block h-full min-h-10 w-full rounded-md border-l-4 px-2 py-1.5 text-left shadow-[2px_2px_0_rgba(24,24,27,0.16)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[3px_3px_0_rgba(24,24,27,0.2)] active:scale-[0.98] ${selected ? 'ring-2 ring-teal-900 ring-offset-2' : ''} ${compact ? 'text-[11px]' : 'text-xs'}`}
-      style={tileStyle(evidence.type)}
+      style={tileStyle(evidence)}
     >
       {onSelect ? (
         <button
@@ -116,6 +122,13 @@ function EvidenceTile({
           title={onDragStart ? 'Drag to a requirement, or select then use the Map button in a requirement' : evidence.title}
         >
           {tile}
+          <span className="mt-1 flex flex-wrap gap-1">
+            {evidence.classifications.map(value => (
+              <span key={value} className="rounded bg-white/70 px-1 py-0.5 text-[9px] font-bold uppercase">
+                {EVIDENCE_CLASSIFICATIONS.find(group => group.value === value)?.name}
+              </span>
+            ))}
+          </span>
         </button>
       ) : tile}
       {onRemove && (
@@ -204,7 +217,13 @@ function withPreRplEvidence(current: RplRecord): RplRecord {
       title: candidate.title,
       reference: candidate.reference,
       notes: 'Provided during Pre-RPL intake',
-      type: 'reports' as const,
+      type: candidate.sourceKey === 'pre-rpl-cv'
+        ? 'professional-resume' as const
+        : candidate.sourceKey === 'pre-rpl-transcript'
+          ? 'academic-transcript' as const
+          : 'position-description' as const,
+      colour: 'teal' as const,
+      location: checklist.sharePointRepositoryCreated ? 'digital-sharepoint' as const : 'sighted-logged' as const,
       classifications: ['indirect'] as EvidenceClassification[],
       subtypes: ['work-sample-portfolio'] as EvidenceSubtype[],
       sourceKey: candidate.sourceKey,
@@ -235,6 +254,8 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
   const [newEvidence, setNewEvidence] = useState(DEFAULT_NEW_EVIDENCE);
   const [exported, setExported] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
+  const [expandedEvidenceIds, setExpandedEvidenceIds] = useState<Set<string>>(new Set());
+  const [collapsedMappingSections, setCollapsedMappingSections] = useState<Set<string>>(new Set());
   const paletteRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -254,6 +275,37 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
     () => rows.filter((row): row is Extract<typeof row, { kind: 'data' }> => row.kind === 'data'),
     [rows],
   );
+  const gapGroups = useMemo(() => {
+    const groups: Array<{ key: string; label: string; rows: typeof requirementRows }> = [];
+    let current = { key: 'performance-criteria', label: 'Performance Criteria', rows: [] as typeof requirementRows };
+    groups.push(current);
+    for (const row of rows) {
+      if (row.kind === 'span' && (row.style === 'element' || row.style === 'section')) {
+        current = { key: row.key, label: row.label, rows: [] };
+        groups.push(current);
+      } else if (row.kind === 'data') {
+        current.rows.push(row);
+      }
+    }
+    const uncoveredKeys = new Set(requirementRows.filter(row => !(record.mappings[row.key]?.length)).map(row => row.key));
+    return groups
+      .map(group => ({ ...group, rows: group.rows.filter(row => uncoveredKeys.has(row.key)) }))
+      .filter(group => group.rows.length);
+  }, [record.mappings, requirementRows, rows]);
+  const visibleMappingRows = useMemo(() => {
+    const visible: typeof rows = [];
+    let hidden = false;
+    for (const row of rows) {
+      const broadSection = row.kind === 'span' && (row.style === 'element' || row.style === 'section');
+      if (broadSection) {
+        visible.push(row);
+        hidden = collapsedMappingSections.has(row.key);
+      } else if (!hidden) {
+        visible.push(row);
+      }
+    }
+    return visible;
+  }, [collapsedMappingSections, rows]);
   const evidenceById = useMemo(() => new Map(record.evidence.map(item => [item.id, item])), [record.evidence]);
   const uncoveredRows = requirementRows.filter(row => !(record.mappings[row.key]?.length));
   const resolvedGaps = uncoveredRows.filter(row => record.interviews[row.key]?.outcome === 'resolved').length;
@@ -401,6 +453,9 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
         <p className="mt-1 max-w-xl text-sm leading-5 text-zinc-600">
           This record is saved in this browser against the unit and student number, so you can return to the RPL assessment later.
         </p>
+        <p className="mt-2 text-xs font-medium text-amber-800">
+          Assessor to check all details before progressing to the evidence register.
+        </p>
         {savedStudents.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-2.5">
             <span className="mr-1 text-xs font-semibold text-zinc-600">Open a saved student:</span>
@@ -505,7 +560,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
           </div>
           <Badge variant="outline" className="border-teal-200 bg-teal-50 text-teal-800">{record.evidence.length} logged</Badge>
         </div>
-        <div className="mt-4 grid gap-2.5 lg:grid-cols-[1.1fr_0.9fr_1.1fr_1fr_auto]">
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-[1.15fr_0.9fr_0.9fr_0.8fr_1fr_1fr_auto]">
           <input
             value={newEvidence.title}
             onChange={event => setNewEvidence(current => ({ ...current, title: event.target.value }))}
@@ -520,6 +575,22 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
             className="h-9 rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
           >
             {EVIDENCE_TYPES.map(type => <option key={type.value} value={type.value}>{type.name}</option>)}
+          </select>
+          <select
+            value={newEvidence.location}
+            onChange={event => setNewEvidence(current => ({ ...current, location: event.target.value as EvidenceItem['location'] }))}
+            aria-label="Evidence location"
+            className="h-9 rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+          >
+            {EVIDENCE_LOCATIONS.map(location => <option key={location.value} value={location.value}>{location.name}</option>)}
+          </select>
+          <select
+            value={newEvidence.colour}
+            onChange={event => setNewEvidence(current => ({ ...current, colour: event.target.value as EvidenceItem['colour'] }))}
+            aria-label="Evidence card colour"
+            className="h-9 rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+          >
+            {EVIDENCE_COLOURS.map(colour => <option key={colour.value} value={colour.value}>{colour.name} card</option>)}
           </select>
           <input
             value={newEvidence.reference}
@@ -545,29 +616,78 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
       </section>
 
       {record.evidence.length ? (
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-           {record.evidence.map((evidence, index) => (
-             <article key={evidence.id} className="rounded-xl border border-zinc-200 bg-white p-3 shadow-sm">
-               <div className="mb-2 flex items-center justify-between">
-                <span className="font-mono text-xs font-bold text-zinc-500">{evidenceCode(index)}</span>
-                <button type="button" onClick={() => deleteEvidence(evidence.id)} className="rounded p-1 text-zinc-400 hover:bg-rose-50 hover:text-rose-600" aria-label={`Delete ${evidence.title}`}>
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <input value={evidence.title} onChange={event => updateEvidence(evidence.id, { title: event.target.value })} aria-label={`${evidenceCode(index)} title`} className="w-full border-0 border-b border-zinc-200 pb-1.5 text-sm font-semibold outline-none focus:border-teal-700" />
-               <input value={evidence.reference} onChange={event => updateEvidence(evidence.id, { reference: event.target.value })} aria-label={`${evidenceCode(index)} reference`} placeholder="Reference / date" className="mt-2 w-full border-0 border-b border-zinc-100 pb-1.5 text-xs text-zinc-600 outline-none focus:border-teal-700" />
-               <textarea value={evidence.notes} onChange={event => updateEvidence(evidence.id, { notes: event.target.value })} aria-label={`${evidenceCode(index)} notes`} placeholder="Evidence details or assessor notes" rows={2} className="mt-2 w-full resize-none rounded-md bg-zinc-50 p-2 text-xs outline-none ring-1 ring-zinc-100 focus:ring-2 focus:ring-teal-200" />
-               <select value={evidence.type} onChange={event => updateEvidence(evidence.id, { type: event.target.value as EvidenceItem['type'] })} aria-label={`${evidenceCode(index)} evidence type`} className="mt-2 h-8 w-full rounded-md border border-zinc-200 bg-zinc-50 px-2 text-xs font-medium text-zinc-700 outline-none focus:border-teal-700">
-                 {EVIDENCE_TYPES.map(type => <option key={type.value} value={type.value}>{type.name}</option>)}
-               </select>
-               <EvidenceClassificationFields
-                 compact
-                 classifications={evidence.classifications}
-                 subtypes={evidence.subtypes}
-                 onChange={patch => updateEvidence(evidence.id, patch)}
-               />
-            </article>
-          ))}
+        <section className="space-y-2">
+          {record.evidence.map((evidence, index) => {
+            const expanded = expandedEvidenceIds.has(evidence.id);
+            const typeName = EVIDENCE_TYPES.find(type => type.value === evidence.type)?.name ?? 'Other';
+            const locationName = EVIDENCE_LOCATIONS.find(location => location.value === evidence.location)?.name ?? 'Sighted / Logged';
+            return (
+              <article key={evidence.id} className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
+                <div className="flex items-center gap-2 border-l-4 px-3 py-2" style={tileStyle(evidence)}>
+                  <button
+                    type="button"
+                    onClick={() => setExpandedEvidenceIds(current => {
+                      const next = new Set(current);
+                      if (next.has(evidence.id)) next.delete(evidence.id); else next.add(evidence.id);
+                      return next;
+                    })}
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                    aria-expanded={expanded}
+                  >
+                    {expanded ? <ChevronDown className="h-4 w-4 shrink-0" /> : <ChevronRight className="h-4 w-4 shrink-0" />}
+                    <span className="font-mono text-xs font-bold">{evidenceCode(index)}</span>
+                    <span className="truncate text-sm font-semibold">{evidence.title}</span>
+                    {evidence.sourceKey && <Badge variant="outline" className="bg-white/60 text-[9px]">Core</Badge>}
+                  </button>
+                  <span className="hidden text-[11px] font-medium md:inline">{typeName}</span>
+                  <span className="hidden text-[11px] opacity-80 lg:inline">{locationName}</span>
+                  <div className="hidden flex-wrap gap-1 sm:flex">
+                    {evidence.classifications.map(value => <Badge key={value} variant="outline" className="bg-white/60 text-[9px] uppercase">{value}</Badge>)}
+                  </div>
+                  <button type="button" onClick={() => deleteEvidence(evidence.id)} className="rounded p-1 opacity-60 hover:bg-white/70 hover:text-rose-700" aria-label={`Delete ${evidence.title}`}>
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+                {expanded && (
+                  <div className="grid gap-2.5 border-t border-zinc-200 p-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <label className="grid gap-1 text-xs font-semibold text-zinc-600">
+                      Evidence title
+                      <input value={evidence.title} onChange={event => updateEvidence(evidence.id, { title: event.target.value })} className="h-9 rounded-md border border-zinc-300 px-2.5 text-sm font-normal outline-none focus:border-teal-700" />
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-zinc-600">
+                      Evidence type
+                      <select value={evidence.type} onChange={event => updateEvidence(evidence.id, { type: event.target.value as EvidenceItem['type'] })} className="h-9 rounded-md border border-zinc-300 bg-white px-2.5 text-sm font-normal outline-none focus:border-teal-700">
+                        {EVIDENCE_TYPES.map(type => <option key={type.value} value={type.value}>{type.name}</option>)}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-zinc-600">
+                      Evidence location
+                      <select value={evidence.location} onChange={event => updateEvidence(evidence.id, { location: event.target.value as EvidenceItem['location'] })} className="h-9 rounded-md border border-zinc-300 bg-white px-2.5 text-sm font-normal outline-none focus:border-teal-700">
+                        {EVIDENCE_LOCATIONS.map(location => <option key={location.value} value={location.value}>{location.name}</option>)}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-zinc-600">
+                      Reference / date
+                      <input value={evidence.reference} onChange={event => updateEvidence(evidence.id, { reference: event.target.value })} className="h-9 rounded-md border border-zinc-300 px-2.5 text-sm font-normal outline-none focus:border-teal-700" />
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-zinc-600">
+                      Card colour
+                      <select value={evidence.colour} disabled={Boolean(evidence.sourceKey)} onChange={event => updateEvidence(evidence.id, { colour: event.target.value as EvidenceItem['colour'] })} className="h-9 rounded-md border border-zinc-300 bg-white px-2.5 text-sm font-normal outline-none focus:border-teal-700 disabled:bg-zinc-100">
+                        {EVIDENCE_COLOURS.map(colour => <option key={colour.value} value={colour.value}>{colour.name}</option>)}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-zinc-600 sm:col-span-2 lg:col-span-1">
+                      Assessor notes
+                      <textarea value={evidence.notes} onChange={event => updateEvidence(evidence.id, { notes: event.target.value })} rows={2} className="resize-y rounded-md border border-zinc-300 p-2 text-sm font-normal outline-none focus:border-teal-700" />
+                    </label>
+                    <div className="sm:col-span-2 lg:col-span-3">
+                      <EvidenceClassificationFields compact classifications={evidence.classifications} subtypes={evidence.subtypes} onChange={patch => updateEvidence(evidence.id, patch)} />
+                    </div>
+                  </div>
+                )}
+              </article>
+            );
+          })}
         </section>
       ) : (
         <div className="rounded-xl border border-dashed border-zinc-300 bg-white py-16 text-center text-sm text-zinc-500">
@@ -582,8 +702,8 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-teal-800">Landscape workspace</p>
-          <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Map evidence to unit requirements</h2>
-          <p className="mt-1 text-sm text-zinc-600">Drag a tile onto a requirement, or select a tile then click a mapping cell. A tile can be used more than once.</p>
+          <h2 className="mt-1 text-xl font-bold tracking-tight text-zinc-900">Map evidence to Performance Criteria</h2>
+          <p className="mt-1 text-sm text-zinc-600">Drag a tile onto a Performance Criterion, or select a tile then click a mapping cell. Collapse completed sections to reduce scrolling.</p>
         </div>
         <div className="flex gap-2 text-xs">
           <Badge variant="outline" className="border-teal-200 bg-teal-50 text-teal-800">{coveredRows} / {requirementRows.length} directly covered</Badge>
@@ -595,9 +715,8 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
           Add at least one evidence item in the Evidence log before mapping it to this unit.
         </div>
       )}
-      <div className="w-full max-w-full overflow-x-auto rounded-xl border border-zinc-300 bg-zinc-200 shadow-sm">
-        <div className="grid min-w-[900px] grid-cols-[220px_1fr]">
-          <aside ref={paletteRef} className="border-r border-teal-800 bg-teal-900 p-3 text-white">
+      <div className="grid w-full max-w-full grid-cols-[220px_minmax(0,1fr)] items-start rounded-xl border border-zinc-300 bg-zinc-200 shadow-sm">
+          <aside ref={paletteRef} className="sticky top-2 max-h-[calc(100vh-8rem)] self-start overflow-y-auto rounded-l-xl border-r border-teal-800 bg-teal-900 p-3 text-white">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-teal-200">Evidence palette</p>
             <p className="mt-1.5 text-xs leading-5 text-teal-100">Drag evidence to the matrix. Click once to select it for click-to-map mode.</p>
             <div className="mt-3 space-y-2">
@@ -619,14 +738,31 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
              <table className="w-full min-w-[680px] border-collapse text-sm">
               <thead>
                 <tr className="bg-zinc-100">
-                   <th className="w-[43%] border-b border-zinc-300 px-3 py-2 text-left text-xs font-bold uppercase tracking-[0.1em] text-zinc-600">Unit requirement</th>
+                    <th className="w-[43%] border-b border-zinc-300 px-3 py-2 text-left text-xs font-bold uppercase tracking-[0.1em] text-zinc-600">Performance Criteria</th>
                    <th className="border-b border-l border-zinc-300 px-3 py-2 text-left text-xs font-bold uppercase tracking-[0.1em] text-zinc-600">Evidence mapped</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map(row => {
+                {visibleMappingRows.map(row => {
                   if (row.kind === 'span') {
-                    return <tr key={row.key}><td colSpan={2} className={`border-b border-zinc-300 px-3 py-2 ${row.style === 'section' ? 'bg-teal-900 text-xs font-bold uppercase tracking-[0.12em] text-white' : row.style === 'element' ? 'bg-zinc-100 font-bold text-zinc-900' : 'bg-white text-xs italic text-zinc-500'}`}>{row.label}</td></tr>;
+                     const broadSection = row.style === 'element' || row.style === 'section';
+                     const collapsed = collapsedMappingSections.has(row.key);
+                     return (
+                       <tr key={row.key}>
+                         <td colSpan={2} className={`border-b border-zinc-300 px-3 py-2 ${row.style === 'section' ? 'bg-teal-900 text-xs font-bold uppercase tracking-[0.12em] text-white' : row.style === 'element' ? 'bg-zinc-100 font-bold text-zinc-900' : 'bg-white text-xs italic text-zinc-500'}`}>
+                           {broadSection ? (
+                             <button type="button" className="flex w-full items-center gap-2 text-left" onClick={() => setCollapsedMappingSections(current => {
+                               const next = new Set(current);
+                               if (next.has(row.key)) next.delete(row.key); else next.add(row.key);
+                               return next;
+                             })}>
+                               {collapsed ? <ChevronRight className="h-4 w-4 shrink-0" /> : <ChevronDown className="h-4 w-4 shrink-0" />}
+                               {row.label}
+                             </button>
+                           ) : row.label}
+                         </td>
+                       </tr>
+                     );
                   }
                   const mappedIds = record.mappings[row.key] ?? [];
                   const mapped = mappedIds.map(id => ({ id, evidence: evidenceById.get(id) })).filter((item): item is { id: string; evidence: EvidenceItem } => Boolean(item.evidence));
@@ -665,7 +801,6 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
               </tbody>
             </table>
           </div>
-        </div>
       </div>
       {selectedEvidenceId && <button type="button" onClick={() => setSelectedEvidenceId(null)} className="text-xs font-medium text-teal-800 underline underline-offset-4">Clear selected evidence</button>}
     </div>
@@ -684,27 +819,38 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
         </Badge>
       </div>
       {uncoveredRows.length ? (
-        <div className="space-y-3">
-          {uncoveredRows.map(row => {
-            const interview = record.interviews[row.key] ?? { question: '', studentResponse: '', assessorNotes: '', outcome: 'pending' as const };
-            return (
-              <article key={row.key} className="rounded-xl border border-teal-200 bg-teal-50/60 p-4 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <p className="max-w-3xl text-sm font-semibold leading-6 text-zinc-900">{row.label}</p>
-                  <select value={interview.outcome} onChange={event => updateInterview(row.key, { outcome: event.target.value as InterviewOutcome })} className="h-9 rounded-md border border-zinc-300 bg-zinc-50 px-2 text-xs font-medium outline-none focus:border-teal-700">
-                    <option value="pending">Pending outcome</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="not-resolved">Not resolved</option>
-                  </select>
-                </div>
-                <div className="mt-3 grid gap-2.5 lg:grid-cols-3">
-                  <textarea value={interview.question} onChange={event => updateInterview(row.key, { question: event.target.value })} rows={4} placeholder="Interview / oral question prompt" className="resize-none rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100" />
-                  <textarea value={interview.studentResponse} onChange={event => updateInterview(row.key, { studentResponse: event.target.value })} rows={4} placeholder="Student response / new evidence" className="resize-none rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100" />
-                  <textarea value={interview.assessorNotes} onChange={event => updateInterview(row.key, { assessorNotes: event.target.value })} rows={4} placeholder="Assessor notes and rationale" className="resize-none rounded-md border border-zinc-200 bg-zinc-50 p-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100" />
-                </div>
-              </article>
-            );
-          })}
+        <div className="space-y-2">
+          {gapGroups.map(group => (
+            <details key={group.key} className="group overflow-hidden rounded-xl border border-teal-200 bg-white shadow-sm">
+              <summary className="flex cursor-pointer list-none items-center gap-2 bg-teal-50 px-4 py-3 text-sm font-bold text-teal-950 [&::-webkit-details-marker]:hidden">
+                <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
+                <span className="min-w-0 flex-1">{group.label}</span>
+                <Badge variant="outline" className="border-teal-300 bg-white text-teal-800">{group.rows.length} gap{group.rows.length === 1 ? '' : 's'}</Badge>
+              </summary>
+              <div className="space-y-2 border-t border-teal-100 p-3">
+                {group.rows.map(row => {
+                  const interview = record.interviews[row.key] ?? { question: '', studentResponse: '', assessorNotes: '', outcome: 'pending' as const };
+                  return (
+                    <article key={row.key} className="rounded-lg border border-teal-100 bg-teal-50/40 p-3">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <p className="max-w-3xl text-sm font-semibold leading-6 text-zinc-900">{row.label}</p>
+                        <select value={interview.outcome} onChange={event => updateInterview(row.key, { outcome: event.target.value as InterviewOutcome })} className="h-9 rounded-md border border-zinc-300 bg-white px-2 text-xs font-medium outline-none focus:border-teal-700">
+                          <option value="pending">Pending outcome</option>
+                          <option value="resolved">Resolved</option>
+                          <option value="not-resolved">Not resolved</option>
+                        </select>
+                      </div>
+                      <div className="mt-3 grid gap-2.5 lg:grid-cols-3">
+                        <textarea value={interview.question} onChange={event => updateInterview(row.key, { question: event.target.value })} rows={3} placeholder="Interview / oral question prompt" className="resize-y rounded-md border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100" />
+                        <textarea value={interview.studentResponse} onChange={event => updateInterview(row.key, { studentResponse: event.target.value })} rows={3} placeholder="Student response / new evidence" className="resize-y rounded-md border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100" />
+                        <textarea value={interview.assessorNotes} onChange={event => updateInterview(row.key, { assessorNotes: event.target.value })} rows={3} placeholder="Assessor notes and rationale" className="resize-y rounded-md border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100" />
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </details>
+          ))}
         </div>
       ) : (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-8 text-center">
@@ -737,13 +883,13 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
       </div>
       <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
          <div className="border-b border-zinc-200 px-4 py-3">
-          <h3 className="font-semibold text-zinc-900">Requirement coverage</h3>
+          <h3 className="font-semibold text-zinc-900">Performance Criteria coverage</h3>
           <p className="mt-1 text-xs text-zinc-500">A direct evidence mapping is shown below; interview records can be completed in the Gaps screen.</p>
         </div>
         <div className="max-h-[520px] overflow-auto">
           <table className="w-full text-sm">
              <thead className="sticky top-0 bg-zinc-100">
-               <tr><th className="px-4 py-2.5 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Requirement</th><th className="px-4 py-2.5 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Evidence</th><th className="px-4 py-2.5 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Status</th></tr>
+               <tr><th className="px-4 py-2.5 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Performance Criteria</th><th className="px-4 py-2.5 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Evidence</th><th className="px-4 py-2.5 text-left text-xs uppercase tracking-[0.1em] text-zinc-600">Status</th></tr>
             </thead>
             <tbody>
               {requirementRows.map(row => {
@@ -751,7 +897,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
                 const interview = record.interviews[row.key];
                 return <tr key={row.key} className="border-t border-zinc-100 align-top">
                    <td className="px-4 py-2.5 text-zinc-800">{row.label}</td>
-                   <td className="px-4 py-2.5">{mapped.length ? <div className="flex flex-wrap gap-1.5">{mapped.map(item => <span key={item.id} style={tileStyle(item.type)} className="rounded border-l-4 px-2 py-1 text-xs font-semibold">{item.title}</span>)}</div> : <span className="text-xs text-zinc-400">No direct evidence</span>}</td>
+                   <td className="px-4 py-2.5">{mapped.length ? <div className="flex flex-wrap gap-1.5">{mapped.map(item => <span key={item.id} style={tileStyle(item)} className="rounded border-l-4 px-2 py-1 text-xs font-semibold">{item.title}</span>)}</div> : <span className="text-xs text-zinc-400">No direct evidence</span>}</td>
                    <td className="px-4 py-2.5 text-xs font-medium">{mapped.length ? <span className="text-emerald-700">Mapped</span> : interview ? <span className={interview.outcome === 'resolved' ? 'text-teal-700' : 'text-amber-700'}>{statusForOutcome(interview.outcome)}</span> : <span className="text-amber-700">Gap</span>}</td>
                 </tr>;
               })}
@@ -778,10 +924,9 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
               onChange={event => updateRecord(current => ({ ...current, finalisation: { ...current.finalisation, outcome: event.target.value as typeof current.finalisation.outcome } }))}
               className="h-10 rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
             >
-              <option value="pending">Decision pending</option>
-              <option value="full-rpl">Full RPL granted</option>
-              <option value="partial-rpl">Partial RPL granted</option>
-              <option value="not-granted">RPL not granted</option>
+              <option value="granted">RPL Granted</option>
+              <option value="in-progress">In Progress</option>
+              <option value="not-granted">RPL Not Granted</option>
             </select>
           </label>
           <label className="grid gap-1">
@@ -789,7 +934,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
             <input
               value={record.finalisation.outcomeNotes}
               onChange={event => updateRecord(current => ({ ...current, finalisation: { ...current.finalisation, outcomeNotes: event.target.value } }))}
-              placeholder="Record the decision rationale, partial-RPL conditions, or next steps"
+              placeholder="Record the decision rationale, extra evidence required, or next steps"
               className="h-10 rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
             />
           </label>
@@ -820,14 +965,13 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
         </div>
         <Button
           onClick={async () => { await exportRplToWord(unit, record); setExported(true); }}
-          disabled={!hasStudent || record.finalisation.outcome === 'pending'}
+          disabled={!hasStudent}
            className="mt-4 bg-teal-800 hover:bg-teal-700"
         >
           {exported ? <Check className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
           {exported ? 'Downloaded RPL mapping' : 'Download landscape Word document'}
         </Button>
         {!hasStudent && <p className="mt-2 text-xs text-rose-700">Add the student name and student number before finalising.</p>}
-        {hasStudent && record.finalisation.outcome === 'pending' && <p className="mt-2 text-xs text-amber-700">Select the final RPL outcome before downloading the report.</p>}
       </section>
       <aside className="rounded-xl border border-teal-900 bg-teal-950 p-4 text-teal-50 shadow-sm">
         <FileCheck2 className="h-7 w-7 text-teal-300" />

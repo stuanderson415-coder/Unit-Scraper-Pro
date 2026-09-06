@@ -180,6 +180,17 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
                 />
               </label>
             </section>
+            <label className="grid gap-1">
+              <span className="text-[11px] font-semibold text-zinc-700">Pre-assessment interview notes</span>
+              <textarea
+                value={intake.preRplChecklist.interviewNotes}
+                onChange={event => updateChecklist({ interviewNotes: event.target.value })}
+                disabled={loading}
+                rows={3}
+                placeholder="Record key discussion points, candidate circumstances, and agreed next steps"
+                className="w-full resize-y rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-xs outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+              />
+            </label>
 
             <section className="border-t border-zinc-200 pt-2.5">
               <div className="mb-1.5">
