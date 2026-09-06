@@ -186,7 +186,15 @@ export default function Home() {
               </Tooltip>
             </TooltipProvider>
             <p className="mt-1 text-[10px] font-medium tracking-wide text-slate-300">
-              Developed by Stuart Anderson, FastigiataLab 2026
+              Developed by Stuart Anderson, FastigiataLab 2026 ·{' '}
+              <a
+                href="https://fastigiatalab.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pointer-events-auto underline decoration-slate-500 underline-offset-2 transition hover:text-white"
+              >
+                fastigiatalab.com
+              </a>
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
