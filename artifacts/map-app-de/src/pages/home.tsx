@@ -168,7 +168,7 @@ export default function Home() {
               </p>
             </div>
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-extrabold tracking-tight drop-shadow-[0_2px_2px_rgba(0,0,0,0.45)] sm:text-2xl">RPL Companion</h1>
+              <h1 className="truncate bg-gradient-to-r from-white via-slate-100 to-teal-100 bg-clip-text text-xl font-extrabold tracking-tight text-transparent drop-shadow-[0_2px_2px_rgba(0,0,0,0.45)] sm:text-2xl">RPL Assessor Companion</h1>
               <p className="hidden truncate text-xs text-slate-300 sm:block">Recognition of Prior Learning workspace</p>
             </div>
           </div>
