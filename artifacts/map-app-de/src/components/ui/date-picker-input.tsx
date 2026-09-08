@@ -37,7 +37,7 @@ export function DatePickerInput({
           disabled={disabled}
           aria-label={ariaLabel}
           className={cn(
-            'flex h-10 w-full items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-left text-sm outline-none transition hover:border-teal-500 focus:border-teal-700 focus:ring-2 focus:ring-teal-100 disabled:cursor-not-allowed disabled:opacity-50',
+            'flex h-10 w-full items-center gap-2 rounded-md border border-zinc-300 bg-white px-3 text-left text-sm outline-none transition hover:border-purple-500 focus:border-purple-700 focus:ring-2 focus:ring-purple-100 disabled:cursor-not-allowed disabled:opacity-50',
             className,
           )}
         >

@@ -145,6 +145,7 @@ export type StudentDetails = {
   trainerName: string;
   organisation: string;
   assessmentDate: string;
+  studentInformed: boolean;
   preRplChecklist: PreRplChecklist;
 };
 
@@ -215,6 +216,7 @@ export function createEmptyRplRecord(): RplRecord {
       trainerName: '',
       organisation: '',
       assessmentDate: '',
+      studentInformed: false,
       preRplChecklist: createEmptyPreRplChecklist(),
     },
     evidence: [],
@@ -268,6 +270,7 @@ export function loadRplRecordForStudent(unitCode: string, studentNumber: string)
         trainerName: parsed.student?.trainerName ?? '',
         organisation: parsed.student?.organisation ?? '',
         assessmentDate: parsed.student?.assessmentDate ?? '',
+        studentInformed: parsed.student?.studentInformed ?? false,
         preRplChecklist: {
           ...createEmptyPreRplChecklist(),
           ...parsed.student?.preRplChecklist,
@@ -387,6 +390,7 @@ export function persistRplRecord(unitCode: string, record: RplRecord, recordStud
         trainerName: record.student.trainerName,
         organisation: record.student.organisation,
         assessmentDate: record.student.assessmentDate,
+        studentInformed: record.student.studentInformed,
         preRplChecklist: record.student.preRplChecklist,
         updatedAt: new Date().toISOString(),
       };

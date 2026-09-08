@@ -36,7 +36,7 @@ function ChecklistDocument({ id, label, checked, fileName, disabled, onCheckedCh
         <Checkbox id={id} checked={checked} onCheckedChange={value => onCheckedChange(value === true)} disabled={disabled} />
         <label htmlFor={id} className="cursor-pointer text-xs font-semibold leading-4 text-zinc-800">{label}</label>
       </div>
-      <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-2 py-1.5 text-[11px] font-medium text-zinc-600 transition hover:border-teal-600 hover:text-teal-800">
+      <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-2 py-1.5 text-[11px] font-medium text-zinc-600 transition hover:border-purple-600 hover:text-purple-800">
         <FileText className="h-3.5 w-3.5 shrink-0" />
         <span className="truncate">{fileName || 'Choose document'}</span>
         <Input
@@ -60,6 +60,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
     trainerName: '',
     organisation: '',
     assessmentDate: today(),
+    studentInformed: false,
     preRplChecklist: createEmptyPreRplChecklist(),
   });
 
@@ -102,16 +103,16 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
   };
 
   return (
-    <Card className="border-teal-300/60 bg-white shadow-sm">
+    <Card className="border-purple-300/60 bg-white shadow-sm">
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 border-b border-zinc-100 pb-3">
         <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-teal-700">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-purple-700">
             <UserRound className="h-4 w-4" /> RPL intake
           </div>
           <CardTitle className="mt-1 text-lg font-semibold tracking-tight text-zinc-900">Start an RPL assessment</CardTitle>
           <CardDescription className="mt-1 text-xs">Enter the key people and unit once, then follow the guided RPL workflow.</CardDescription>
         </div>
-        <div className="hidden rounded-lg bg-teal-50 px-3 py-2 text-right text-xs leading-5 text-teal-900 sm:block">
+        <div className="hidden rounded-lg bg-purple-50 px-3 py-2 text-right text-xs leading-5 text-purple-900 sm:block">
           <span className="block font-semibold">Recognition of Prior Learning</span>
           <span>Evidence Mapping Tool</span>
         </div>
@@ -148,7 +149,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
             <Input placeholder="e.g. CHCCCS007" value={code} onChange={event => setCode(event.target.value.toUpperCase())} className="font-mono" disabled={loading} />
           </label>
           <div className="flex min-w-0 items-end lg:col-span-2">
-            <Button type="submit" disabled={loading} className="h-9 w-full px-2 text-xs bg-teal-600 hover:bg-teal-700">
+            <Button type="submit" disabled={loading} className="h-9 w-full px-2 text-xs bg-purple-600 hover:bg-purple-700">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Start
             </Button>
@@ -158,7 +159,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
         <details className="mt-3 border-t border-zinc-100 pt-2">
           <summary className="cursor-pointer text-[11px] font-medium text-zinc-500 hover:text-zinc-800">Pre-RPL Interview</summary>
           <div className="mt-2 space-y-2.5 rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-            <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-teal-800">RPL Pre-Assessment</h3>
+            <h3 className="text-xs font-bold uppercase tracking-[0.1em] text-purple-800">RPL Pre-Assessment</h3>
             <section className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -188,7 +189,7 @@ export function LookupForm({ onUnitLoaded, isPending }: Props) {
                 disabled={loading}
                 rows={3}
                 placeholder="Record key discussion points, candidate circumstances, and agreed next steps"
-                className="w-full resize-y rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-xs outline-none transition focus:border-teal-700 focus:ring-2 focus:ring-teal-100"
+                className="w-full resize-y rounded-md border border-zinc-300 bg-white px-2.5 py-2 text-xs outline-none transition focus:border-purple-700 focus:ring-2 focus:ring-purple-100"
               />
             </label>
 

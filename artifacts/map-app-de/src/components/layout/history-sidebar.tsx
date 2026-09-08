@@ -4,7 +4,6 @@ import { ClipboardCheck, History, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  clearRplProgress,
   listRplProgress,
   removeRplProgress,
   RPL_PROGRESS_EVENT,
@@ -29,11 +28,6 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
     return () => window.removeEventListener(RPL_PROGRESS_EVENT, refresh);
   }, []);
 
-  const handleClear = () => {
-    if (!window.confirm('Clear all RPL assessments in progress? This removes the saved browser records.')) return;
-    clearRplProgress();
-  };
-
   const handleDelete = (entry: RplProgressItem, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!window.confirm(`Remove the RPL record for ${studentDisplayName(entry) || entry.studentNumber}?`)) return;
@@ -47,12 +41,6 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
           <History className="h-3.5 w-3.5 text-white" />
           Applications in progress
         </div>
-        {progress.length > 0 && (
-          <Button variant="ghost" size="icon" onClick={handleClear} title="Clear history"
-            className="h-7 w-7 text-zinc-300 hover:bg-zinc-700 hover:text-red-400">
-            <Trash2 className="w-4 h-4" />
-          </Button>
-        )}
       </div>
       <ScrollArea className="flex-1">
         {progress.length === 0 ? (
@@ -68,7 +56,7 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
             {progress.map(entry => (
               <div
                 key={`${entry.unitCode}-${entry.studentNumber}`}
-                 className="group flex cursor-pointer items-start gap-2 border-l-2 border-transparent p-2.5 transition-colors hover:border-teal-300 hover:bg-teal-700"
+                 className="group flex cursor-pointer items-start gap-2 border-l-2 border-transparent p-2.5 transition-colors hover:border-purple-300 hover:bg-purple-700"
                 onClick={() => onSelect(entry.unitCode, entry.studentNumber)}
               >
                 <div className="mt-0.5">
@@ -88,7 +76,7 @@ export function HistorySidebar({ onSelect }: { onSelect: (code: string, studentN
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-red-400 hover:bg-zinc-700 shrink-0"
+                  className="h-6 w-6 shrink-0 text-zinc-200 hover:bg-zinc-700 hover:text-red-300"
                    onClick={(e) => handleDelete(entry, e)}
                    title="Remove RPL record"
                 >

@@ -31,13 +31,13 @@ function WelcomePanel() {
   ];
 
   return (
-    <section className="rounded-xl border border-teal-200 bg-white p-4 shadow-sm md:p-5">
+    <section className="rounded-xl border border-purple-200 bg-white p-4 shadow-sm md:p-5">
       <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-700">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-700">
           <ClipboardCheck className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-teal-700">Welcome</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-purple-700">Welcome</p>
           <h2 className="mt-0.5 text-xl font-bold tracking-tight text-zinc-900">Welcome to RPL Companion</h2>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-zinc-600">
             This tool will assist you to organise and map a student’s evidence submitted toward an RPL application.
@@ -51,19 +51,19 @@ function WelcomePanel() {
            <ol className="mt-2 grid gap-1 sm:grid-cols-2">
             {steps.map((step, index) => (
               <li key={step} className="flex gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-2.5 py-1.5 text-xs leading-4 text-zinc-700">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-teal-600 text-[11px] font-bold text-white">{index + 1}</span>
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-600 text-[11px] font-bold text-white">{index + 1}</span>
                 <span>{step}</span>
               </li>
             ))}
           </ol>
         </div>
-        <aside className="rounded-xl border border-teal-100 bg-teal-50/80 p-3">
-          <FileCheck2 className="h-5 w-5 text-teal-700" />
-          <h3 className="mt-2 text-sm font-semibold text-teal-950">Your final report</h3>
-          <p className="mt-1 text-xs leading-5 text-teal-900">
+        <aside className="rounded-xl border border-purple-100 bg-purple-50/80 p-3">
+          <FileCheck2 className="h-5 w-5 text-purple-700" />
+          <h3 className="mt-2 text-sm font-semibold text-purple-950">Your final report</h3>
+          <p className="mt-1 text-xs leading-5 text-purple-900">
             At the conclusion of the process, you can generate an RPL assessor report combining the learner’s certified evidence log, gap assessments and interview records, final mapping, and assessment decision.
           </p>
-          <p className="mt-1 text-[11px] font-medium leading-4 text-teal-800">
+          <p className="mt-1 text-[11px] font-medium leading-4 text-purple-800">
             Lodge this report with the student’s RPL application form.
           </p>
         </aside>
@@ -126,6 +126,7 @@ export default function Home() {
       trainerName: 'Preview Assessor',
       organisation: 'Preview Qualification',
       assessmentDate: new Date().toLocaleDateString('en-CA'),
+      studentInformed: true,
       preRplChecklist: {
         interviewCompleted: true,
         interviewDate: new Date().toLocaleDateString('en-CA'),
@@ -168,7 +169,7 @@ export default function Home() {
               </p>
             </div>
             <div className="min-w-0">
-              <h1 className="truncate bg-gradient-to-r from-white via-slate-100 to-teal-100 bg-clip-text text-xl font-extrabold tracking-tight text-transparent drop-shadow-[0_2px_2px_rgba(0,0,0,0.45)] sm:text-2xl">RPL Assessor Companion</h1>
+              <h1 className="truncate bg-gradient-to-r from-white via-slate-100 to-purple-100 bg-clip-text text-xl font-extrabold tracking-tight text-transparent drop-shadow-[0_2px_2px_rgba(0,0,0,0.45)] sm:text-2xl">RPL Assessor Companion</h1>
               <p className="hidden truncate text-xs text-slate-300 sm:block">Recognition of Prior Learning workspace</p>
             </div>
           </div>
@@ -274,7 +275,7 @@ export default function Home() {
                           <p className="font-mono text-xs font-bold text-zinc-500">{currentUnit.code}</p>
                           <p className="mt-0.5 text-sm font-semibold text-zinc-900">{currentUnit.title}</p>
                         </div>
-                        <button type="button" onClick={() => setWorkspaceMode('rpl')} className="rounded-md border border-teal-700 px-3 py-1.5 text-xs font-semibold text-teal-800 transition hover:bg-teal-50">Return to RPL workflow</button>
+                        <button type="button" onClick={() => setWorkspaceMode('rpl')} className="rounded-md border border-purple-700 px-3 py-1.5 text-xs font-semibold text-purple-800 transition hover:bg-purple-50">Return to RPL workflow</button>
                       </div>
                       <UnitDisplay unit={currentUnit} numTasks={numTasks} docTitle={docTitle} />
                     </div>}
