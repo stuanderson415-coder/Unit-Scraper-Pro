@@ -56,3 +56,17 @@ mtime_ms = 1789306498319
 storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:58c13128-b75a-4fec-8f78-d6eb339fda61/ab4b2097-f104-401f-9b11-d553f2728c4e/efca8f81-8c9b-4541-9c82-c99a0e3d990d"
 storage_version_token = "1789306515593154"
 content_type = "image/png"
+
+[[outputs]]
+id = "wJ9HSowKizgc1KOtKUyC-"
+uri = "file://attached_assets/icon-exploration/options-a-c-large.png"
+type = "image"
+title = "Options A and C — Large Comparison"
+description = "Option A is on the left and Option C is on the right. Open the image for the full 2400×1200 view."
+logical_id = "3c87d3d9-5776-4af6-b152-13d4040e9595"
+content_hash = "sha256:65774f2abc7713dd08428960b9a8d882483cb88eb5dbbcb20421b1bf5a2f235e"
+size = 1363235
+mtime_ms = 1789306645723
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:58c13128-b75a-4fec-8f78-d6eb339fda61/3c87d3d9-5776-4af6-b152-13d4040e9595/fccdee62-61ed-4ea6-88ba-d01254dfcfcd"
+storage_version_token = "1789306649940297"
+content_type = "image/png"
