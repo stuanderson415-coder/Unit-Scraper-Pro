@@ -8,6 +8,7 @@
   "display": "standalone",
   "background_color": "#172f4d",
   "theme_color": "#1e032f",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "./icons/icon-192.png",
