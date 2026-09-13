@@ -14,3 +14,45 @@ mtime_ms = 1789305851483
 storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:58c13128-b75a-4fec-8f78-d6eb339fda61/052208c4-5a8c-47c1-b33d-6ec52d71c715/a9ae7436-e47e-4a5a-a182-6a0af60d21a8"
 storage_version_token = "1789305917603324"
 content_type = "image/png"
+
+[[outputs]]
+id = "PJ_LkLJqGCewGGvYBZVMo"
+uri = "file://attached_assets/icon-exploration/variant-a.png"
+type = "image"
+title = "Option A — Puzzle-first badge"
+description = "The rotated puzzle is dominant, RPL sits centrally in a high-contrast plate, and CIT acts as a smaller endorsement."
+logical_id = "751af5ae-46d3-4dd6-8bc1-5ad87a15e715"
+content_hash = "sha256:260f1f688d3c2927a1c96b8fd2668a2462cc454e11831e25c2b1a548be653a72"
+size = 508983
+mtime_ms = 1789306497479
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:58c13128-b75a-4fec-8f78-d6eb339fda61/751af5ae-46d3-4dd6-8bc1-5ad87a15e715/5d0809c9-d9a7-4535-ba07-77d7331aaf79"
+storage_version_token = "1789306514183029"
+content_type = "image/png"
+
+[[outputs]]
+id = "fPSdc7pzLK_s_bk1BVtHN"
+uri = "file://attached_assets/icon-exploration/variant-b.png"
+type = "image"
+title = "Option B — Balanced institutional badge"
+description = "RPL and the puzzle share the upper field, while the white CIT mark receives a dedicated navy foundation."
+logical_id = "86244044-028f-418f-8fc2-b212e7db4762"
+content_hash = "sha256:01f0311e04be5fd35eae8176557b1ce878d714da09064a80a80cef71e7655d03"
+size = 456522
+mtime_ms = 1789306497819
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:58c13128-b75a-4fec-8f78-d6eb339fda61/86244044-028f-418f-8fc2-b212e7db4762/eca3dd1c-cdfc-41e9-bea4-1cc4ac3763db"
+storage_version_token = "1789306514928638"
+content_type = "image/png"
+
+[[outputs]]
+id = "YffXRms_pQNg2Duj67Zur"
+uri = "file://attached_assets/icon-exploration/variant-c.png"
+type = "image"
+title = "Option C — Compact monogram"
+description = "A tightly grouped navy badge designed for better recognition at small home-screen icon sizes."
+logical_id = "ab4b2097-f104-401f-9b11-d553f2728c4e"
+content_hash = "sha256:1c3fae00d91984b633fbd9ee474a81a667fcd467b6a9aab0636ee31be4c53c6f"
+size = 402410
+mtime_ms = 1789306498319
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:58c13128-b75a-4fec-8f78-d6eb339fda61/ab4b2097-f104-401f-9b11-d553f2728c4e/efca8f81-8c9b-4541-9c82-c99a0e3d990d"
+storage_version_token = "1789306515593154"
+content_type = "image/png"
