@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "qUJ8nl-4DDB5RGqMck6wo"
+uri = "file://artifacts/map-app-de/public/icons/icon-512.png"
+type = "image"
+title = "RPL Companion PWA Icon"
+description = "Current 512×512 app icon: white CIT mark centred on the existing navy brand background."
+logical_id = "052208c4-5a8c-47c1-b33d-6ec52d71c715"
+content_hash = "sha256:c9e06522c751093ac45cee1bc0be2c31ec318139dacce5e9d92f21fe7770089c"
+size = 40913
+mtime_ms = 1789305851483
+storage_uri = "gcs://replit-rams-assets-spock/rams/assets/repl:58c13128-b75a-4fec-8f78-d6eb339fda61/052208c4-5a8c-47c1-b33d-6ec52d71c715/a9ae7436-e47e-4a5a-a182-6a0af60d21a8"
+storage_version_token = "1789305917603324"
+content_type = "image/png"
