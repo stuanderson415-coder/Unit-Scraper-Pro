@@ -578,7 +578,7 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
           </div>
           <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-800">{record.evidence.length} logged</Badge>
         </div>
-        <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-[1.15fr_0.9fr_0.9fr_0.8fr_1fr_1fr_auto]">
+        <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-[minmax(170px,1.15fr)_minmax(150px,0.9fr)_minmax(145px,0.85fr)_auto_145px_auto]">
           <input
             value={newEvidence.title}
             onChange={event => setNewEvidence(current => ({ ...current, title: event.target.value }))}
@@ -602,35 +602,49 @@ export function RplWorkflow({ unit, studentNumber, prefill, initialStage = 'stud
           >
             {EVIDENCE_LOCATIONS.map(location => <option key={location.value} value={location.value}>{location.name}</option>)}
           </select>
-          <select
-            value={newEvidence.colour}
-            onChange={event => setNewEvidence(current => ({ ...current, colour: event.target.value as EvidenceItem['colour'] }))}
-            aria-label="Evidence card colour"
-            className="h-9 rounded-md border border-zinc-300 bg-white px-2.5 text-sm outline-none focus:border-purple-700 focus:ring-2 focus:ring-purple-100"
-          >
-            {EVIDENCE_COLOURS.map(colour => <option key={colour.value} value={colour.value}>{colour.name} card</option>)}
-          </select>
+          <fieldset aria-label="Evidence card colour" className="flex h-9 items-center gap-1 rounded-md border border-zinc-300 bg-white px-2">
+            <legend className="sr-only">Evidence card colour</legend>
+            {EVIDENCE_COLOURS.map(colour => (
+              <button
+                key={colour.value}
+                type="button"
+                title={`${colour.name} card`}
+                aria-label={`${colour.name} evidence card`}
+                aria-pressed={newEvidence.colour === colour.value}
+                onClick={() => setNewEvidence(current => ({ ...current, colour: colour.value }))}
+                className={`h-4 w-4 shrink-0 rounded-full border-2 transition focus:outline-none focus:ring-2 focus:ring-purple-300 focus:ring-offset-1 ${newEvidence.colour === colour.value ? 'scale-110 border-zinc-900' : 'border-white ring-1 ring-zinc-300'}`}
+                style={{ backgroundColor: colour.color }}
+              />
+            ))}
+          </fieldset>
           <input
+            type="date"
             value={newEvidence.reference}
             onChange={event => setNewEvidence(current => ({ ...current, reference: event.target.value }))}
-            placeholder="Reference / date"
-             className="h-9 rounded-md border border-zinc-300 px-2.5 text-sm outline-none focus:border-purple-700 focus:ring-2 focus:ring-purple-100"
+            aria-label="Reference date"
+            title="Reference date"
+            className="h-9 min-w-0 rounded-md border border-zinc-300 px-2 text-sm outline-none focus:border-purple-700 focus:ring-2 focus:ring-purple-100"
           />
-          <input
-            value={newEvidence.notes}
-            onChange={event => setNewEvidence(current => ({ ...current, notes: event.target.value }))}
-            placeholder="Brief notes (optional)"
-             className="h-9 rounded-md border border-zinc-300 px-2.5 text-sm outline-none focus:border-purple-700 focus:ring-2 focus:ring-purple-100"
-          />
-           <Button onClick={addEvidence} disabled={!newEvidence.title.trim()} className="h-9 bg-purple-800 hover:bg-purple-700">
+          <Button onClick={addEvidence} disabled={!newEvidence.title.trim()} className="h-9 whitespace-nowrap bg-purple-800 hover:bg-purple-700">
             <Plus className="mr-1.5 h-4 w-4" />Add evidence
           </Button>
         </div>
-        <EvidenceClassificationFields
-          classifications={newEvidence.classifications}
-          subtypes={newEvidence.subtypes}
-          onChange={patch => setNewEvidence(current => ({ ...current, ...patch }))}
-        />
+        <div className="grid gap-2.5 lg:grid-cols-[auto_minmax(260px,1fr)] lg:items-start">
+          <EvidenceClassificationFields
+            classifications={newEvidence.classifications}
+            subtypes={newEvidence.subtypes}
+            onChange={patch => setNewEvidence(current => ({ ...current, ...patch }))}
+            compact
+          />
+          <textarea
+            value={newEvidence.notes}
+            onChange={event => setNewEvidence(current => ({ ...current, notes: event.target.value }))}
+            placeholder="Brief notes (optional)"
+            aria-label="Brief evidence notes"
+            rows={2}
+            className="mt-2 min-h-10 resize-y rounded-md border border-zinc-300 px-2.5 py-2 text-sm outline-none focus:border-purple-700 focus:ring-2 focus:ring-purple-100"
+          />
+        </div>
       </section>
 
       {record.evidence.length ? (
